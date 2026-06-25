@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Algorithm Cockpit Options</title>
+  <style>
+    :root { color-scheme: dark; --bg:#070b12; --panel:#111827; --line:rgba(139,164,205,.18); --text:#eef5ff; --muted:#8da0ba; --cyan:#42b8f5; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: var(--text); background: var(--bg); }
+    main { max-width: 760px; margin: 0 auto; padding: 32px 18px; }
+    h1 { margin: 0 0 6px; font-size: 24px; }
+    p { margin: 0 0 20px; color: var(--muted); line-height: 1.6; }
+    section { border: 1px solid var(--line); background: var(--panel); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+    h2 { margin: 0 0 10px; font-size: 14px; }
+    label { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--line); color: var(--muted); }
+    label:first-of-type { border-top: 0; }
+    input { accent-color: var(--cyan); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Options</h1>
+    <p>Local-first settings for the extension build. The GitHub Pages version ignores browser extension permissions.</p>
+    <section>
+      <h2>Playback</h2>
+      <label>Reduced motion <input type="checkbox"></label>
+      <label>Start with last run <input type="checkbox" checked></label>
+      <label>Show timeline markers <input type="checkbox" checked></label>
+    </section>
+    <section>
+      <h2>Storage</h2>
+      <label>Autosave local scenarios <input type="checkbox" checked></label>
+      <label>Keep trace event logs <input type="checkbox" checked></label>
+      <label>Export includes full trace <input type="checkbox" checked></label>
+    </section>
+  </main>
+</body>
+</html>

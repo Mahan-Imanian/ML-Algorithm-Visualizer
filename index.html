@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Algorithm Cockpit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+  <div class="app" data-family="pathfinding" data-mode="build">
+
+    <header class="topbar">
+      <div class="identity">
+        <div class="mark" aria-hidden="true">λ</div>
+        <span class="brand">Algorithm Cockpit</span>
+      </div>
+
+      <nav class="workflow" aria-label="Workflow modes">
+        <button class="mode-btn is-active" data-mode="build">Build</button>
+        <button class="mode-btn" data-mode="run">Run</button>
+        <button class="mode-btn" data-mode="analyze">Analyze</button>
+        <button class="mode-btn" data-mode="library">Library</button>
+      </nav>
+
+      <div class="topbar-end">
+        <button class="btn-ghost cmd-trigger" id="commandTrigger"><kbd>⌘K</kbd> Command</button>
+        <div class="save-pill" id="saveState">
+          <span class="save-dot"></span>
+          <span class="save-label">Local draft</span>
+        </div>
+        <button class="btn-icon" id="exportButton" aria-label="Export run" title="Export JSON">↑</button>
+        <button class="btn-icon" id="importButton" aria-label="Import run" title="Import JSON">↓</button>
+        <input class="hidden-file" type="file" id="importFile" accept="application/json">
+      </div>
+    </header>
+
+    <main class="shell">
+      <aside class="rail" aria-label="Tools">
+        <div class="rail-inner" id="toolRail"></div>
+      </aside>
+
+      <section class="workspace">
+        <div class="workspace-head">
+          <div class="family-tabs" aria-label="Algorithm family">
+            <button class="family-btn is-active" data-family="pathfinding">Pathfinding</button>
+            <button class="family-btn" data-family="sorting">Sorting</button>
+            <button class="family-btn" data-family="learning">Learning</button>
+          </div>
+
+          <div class="algo-picker" id="algorithmCombo">
+            <button class="picker-btn" id="comboButton" aria-haspopup="listbox" aria-expanded="false">
+              <span class="picker-label">
+                <strong id="comboName">Breadth-first search</strong>
+                <small id="comboMeta">Unweighted · O(V + E)</small>
+              </span>
+              <span class="picker-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="picker-list" id="comboList" role="listbox"></div>
+          </div>
+
+          <div class="ws-actions" id="workspaceActions"></div>
+        </div>
+
+        <div class="canvas-wrap">
+          <div class="canvas-status" id="canvasStatus" aria-live="polite">Build terrain. Space runs the trace.</div>
+          <div class="legend" id="legend" aria-label="Legend"></div>
+
+          <div class="grid-stage" id="gridStage" aria-label="Pathfinding grid" role="grid"></div>
+          <div class="sort-stage is-hidden" id="sortStage" aria-label="Sorting array"></div>
+          <div class="learn-stage is-hidden" id="learnStage">
+            <canvas id="learnCanvas" aria-label="Learning plot" role="img"></canvas>
+          </div>
+          <div class="library-stage is-hidden" id="libraryStage"></div>
+        </div>
+      </section>
+
+      <aside class="inspector" aria-label="Algorithm inspector">
+        <div class="inspector-tabs" role="tablist">
+          <button class="inspector-tab is-active" data-panel="state" role="tab" aria-selected="true">State</button>
+          <button class="inspector-tab" data-panel="trace" role="tab" aria-selected="false">Trace</button>
+          <button class="inspector-tab" data-panel="code" role="tab" aria-selected="false">Pseudocode</button>
+        </div>
+        <div class="inspector-body" id="statePanel" role="tabpanel"></div>
+        <div class="inspector-body is-hidden" id="tracePanel" role="tabpanel"></div>
+        <div class="inspector-body is-hidden" id="codePanel" role="tabpanel"></div>
+      </aside>
+    </main>
+
+    <footer class="timeline" aria-label="Playback controls">
+      <div class="transport">
+        <button class="transport-btn" id="backButton" aria-label="Step back">←</button>
+        <button class="transport-btn primary" id="runButton">Run</button>
+        <button class="transport-btn" id="stepButton" aria-label="Step forward">→</button>
+        <button class="transport-btn" id="resetTraceButton" aria-label="Reset trace" title="Reset to start">↺</button>
+      </div>
+
+      <div class="tracebar" id="tracebar">
+        <div class="trace-meta">
+          <span id="stepLabel">Step 0 / 0</span>
+          <span id="timelineStatus">No trace</span>
+        </div>
+        <input id="stepRange" type="range" min="0" max="0" value="0" aria-label="Scrub trace">
+        <div class="markers" id="markers" aria-hidden="true"></div>
+      </div>
+
+      <div class="speedbox">
+        <span>Speed</span>
+        <input id="speedRange" type="range" min="1" max="8" value="4" aria-label="Playback speed">
+      </div>
+    </footer>
+
+  </div>
+
+  <div class="palette-backdrop" id="paletteBackdrop"></div>
+  <section class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+    <div class="palette-search">
+      <kbd aria-hidden="true">⌘K</kbd>
+      <input id="commandInput" placeholder="Run BFS, load weighted corridor, export trace…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="palette-results" id="paletteResults" role="listbox"></div>
+  </section>
+
+  <div class="toast" id="toast" aria-live="assertive" role="status"></div>
+
+  <script src="src/learning.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>
