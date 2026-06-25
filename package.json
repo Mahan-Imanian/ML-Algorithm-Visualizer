@@ -1,0 +1,19 @@
+{
+  "name": "algorithm-cockpit",
+  "version": "1.1.0",
+  "description": "A local browser lab for stepping through pathfinding, sorting, and machine-learning algorithms one state change at a time.",
+  "license": "MIT",
+  "author": "Mahan Imanian",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node test/run.js"
+  },
+  "files": [
+    "index.html",
+    "src",
+    "popup.html",
+    "sidepanel.html",
+    "options.html",
+    "manifest.json"
+  ]
+}
