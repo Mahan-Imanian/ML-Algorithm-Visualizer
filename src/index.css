@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Surfaces — deep slate-indigo */
+  --background: oklch(0.09 0.006 262);
+  --s1: oklch(0.12 0.008 262);
+  --s2: oklch(0.15 0.01 262);
+  --s3: oklch(0.19 0.012 262);
+  --s4: oklch(0.24 0.015 262);
+  --popover: oklch(0.15 0.01 262);
+  --muted: oklch(0.15 0.01 262);
+
+  /* Text — WCAG AA verified on these surfaces */
+  --foreground: oklch(0.92 0.008 262);
+  --muted-foreground: oklch(0.62 0.012 262);
+  --faint: oklch(0.56 0.011 262);
+
+  /* Borders / focus */
+  --border: oklch(0.33 0.011 262 / 0.55);
+  --input: oklch(0.33 0.011 262 / 0.55);
+  --ring: oklch(0.72 0.18 279);
+
+  /* Primary — violet, white text clears 5.2:1 */
+  --primary: oklch(0.54 0.2 279);
+  --primary-hover: oklch(0.6 0.2 279);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-soft: oklch(0.6 0.19 279 / 0.12);
+  --primary-soft-border: oklch(0.6 0.19 279 / 0.4);
+  --primary-text: oklch(0.84 0.1 279);
+
+  /* Accent + semantic */
+  --accent: oklch(0.82 0.14 78);
+  --accent-foreground: oklch(0.16 0.02 78);
+  --success: oklch(0.74 0.16 162);
+  --danger: oklch(0.67 0.19 16);
+  --info: oklch(0.57 0.17 240);
+
+  /* Algorithm cell colors */
+  --cell-empty: oklch(0.13 0.008 262);
+  --cell-wall: oklch(0.21 0.01 262);
+  --cell-weight: oklch(0.26 0.045 68);
+  --cell-visited: oklch(0.28 0.06 240);
+  --cell-frontier: oklch(0.4 0.13 279);
+  --cell-current: oklch(0.6 0.19 279);
+  --cell-path: oklch(0.82 0.14 78);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply overflow-hidden bg-background font-sans text-[13px] text-foreground antialiased;
+    margin: 0;
+    line-height: 1.5;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
