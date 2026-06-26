@@ -1,6 +1,5 @@
 import "@testing-library/jest-dom";
 
-// jsdom lacks a few browser APIs that Radix primitives rely on.
 class ResizeObserverMock {
   observe() {}
   unobserve() {}

@@ -10,7 +10,6 @@ import { CommandPalette } from "@/components/CommandPalette";
 export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
 
-  // Playback loop: advance the cursor on a cadence derived from the speed slider.
   const playing = useAlgoscope((s) => s.playing);
   const cursor = useAlgoscope((s) => s.cursor);
   const speed = useAlgoscope((s) => s.speed);
@@ -27,7 +26,6 @@ export default function App() {
     return () => window.clearTimeout(id);
   }, [playing, cursor, speed, trace]);
 
-  // Global keyboard shortcuts.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -54,12 +52,12 @@ export default function App() {
   }, []);
 
   return (
-    <div className="grid h-screen grid-rows-[50px_minmax(0,1fr)_60px] gap-2 p-2">
+    <div className="grid h-screen grid-rows-[52px_minmax(0,1fr)_62px] gap-2.5 p-2.5">
       <TopBar onOpenPalette={() => setPaletteOpen(true)} />
 
-      <main className="grid min-h-0 grid-cols-[minmax(0,1fr)_308px] gap-2 max-lg:grid-cols-[minmax(0,1fr)]">
+      <main className="grid min-h-0 grid-cols-[minmax(0,1fr)_320px] gap-2.5 max-lg:grid-cols-[minmax(0,1fr)]">
         <Workspace />
-        <aside className="overflow-hidden rounded-xl border border-border bg-surface-1 max-lg:hidden" aria-label="Inspector">
+        <aside className="panel overflow-hidden max-lg:hidden" aria-label="Inspector">
           <Inspector />
         </aside>
       </main>

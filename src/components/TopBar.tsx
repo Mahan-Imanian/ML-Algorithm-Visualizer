@@ -24,16 +24,21 @@ export function TopBar({ onOpenPalette }: TopBarProps) {
   };
 
   return (
-    <header className="flex items-stretch overflow-hidden rounded-xl border border-border bg-surface-1">
+    <header className="panel flex items-stretch overflow-hidden">
       <div className="flex items-center gap-2.5 border-r border-border px-4">
-        <span className="grid h-7 w-7 place-items-center rounded-md border border-[var(--primary-soft-border)] bg-[var(--primary-soft)] text-[var(--primary-text)]">
+        <span className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-b from-[var(--primary-top)] to-[var(--primary-bottom)] text-primary-foreground shadow-primary">
           <ScanEye size={16} />
         </span>
-        <span className="text-[13px] font-semibold tracking-tight text-foreground">Algoscope</span>
+        <div className="flex flex-col leading-none">
+          <span className="text-[13px] font-semibold tracking-tight text-foreground">Algoscope</span>
+          <span className="mt-0.5 hidden font-mono text-[9px] uppercase tracking-[0.14em] text-faint lg:inline">
+            algorithm lab
+          </span>
+        </div>
       </div>
 
-      <div className="flex flex-1 items-center px-3">
-        <span className="hidden font-mono text-[11px] text-muted-foreground sm:inline">
+      <div className="flex flex-1 items-center px-4">
+        <span className="hidden font-mono text-[11px] text-muted-foreground md:inline">
           an instrument for watching algorithms think
         </span>
       </div>
@@ -42,7 +47,9 @@ export function TopBar({ onOpenPalette }: TopBarProps) {
         <Button variant="outline" onClick={onOpenPalette} className="gap-1.5">
           <Command size={13} />
           <span className="hidden md:inline">Command</span>
-          <kbd className="font-mono text-[10px] text-[var(--primary-text)]">⌘K</kbd>
+          <kbd className="rounded border border-border bg-surface-3 px-1 py-px font-mono text-[10px] text-primary-text">
+            ⌘K
+          </kbd>
         </Button>
         <Button variant="outline" size="icon" onClick={onExport} aria-label="Export trace as JSON" title="Export JSON">
           <Download size={14} />
