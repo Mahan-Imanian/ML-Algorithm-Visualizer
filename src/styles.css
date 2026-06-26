@@ -12,17 +12,25 @@
   --b1: oklch(0.33 0.011 262 / 0.55);
   --b2: oklch(0.43 0.014 262 / 0.68);
 
-  /* Text */
+  /* Text — tuned for WCAG AA on dark surfaces (t2 5.6:1, t3 4.2:1) */
   --t0: oklch(0.92 0.008 262);
   --t1: oklch(0.66 0.010 262);
-  --t2: oklch(0.44 0.008 262);
-  --t3: oklch(0.30 0.006 262);
+  --t2: oklch(0.62 0.012 262);
+  --t3: oklch(0.56 0.011 262);
 
   /* Primary — violet (palette seed oklch 0.445 0.206 279) */
   --vio:    oklch(0.60 0.19 279);
   --vio-bg: oklch(0.60 0.19 279 / 0.12);
   --vio-bd: oklch(0.60 0.19 279 / 0.40);
   --vio-tx: oklch(0.84 0.10 279);
+  /* Strong fill for primary actions — white text clears 5.2:1 */
+  --vio-strong: oklch(0.54 0.20 279);
+  --vio-strong-h: oklch(0.60 0.20 279);
+  --on-primary: oklch(0.99 0 0);
+  --shadow-primary: 0 4px 16px oklch(0.54 0.20 279 / 0.40);
+
+  /* Focus ring — solid, high-visibility (7.7:1 on bg) */
+  --focus: oklch(0.72 0.18 279);
 
   /* Accent — warm amber-gold for data markers */
   --amb:    oklch(0.82 0.14 78);
@@ -72,9 +80,15 @@ body {
 }
 button { cursor: pointer; font: inherit; }
 button:focus-visible,
-input:focus-visible { outline: 2px solid var(--vio-bd); outline-offset: 2px; }
+input:focus-visible,
+[tabindex]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--r-sm); }
 .is-hidden { display: none !important; }
 .hidden-file { display: none; }
+
+/* Tactile press feedback on controls (not grid cells) */
+.mode-btn:active, .family-btn:active, .btn-ghost:active, .btn-icon:active,
+.tool-btn:active, .ws-actions button:active, .transport-btn:active,
+.card-load:active, .picker-btn:active, .cmd-row:active { transform: translateY(1px); }
 
 /* ─── App shell ──────────────────────────────────────────────── */
 .app {
@@ -413,15 +427,16 @@ input:focus-visible { outline: 2px solid var(--vio-bd); outline-offset: 2px; }
 }
 .ws-actions button:hover { border-color: var(--b2); color: var(--t0); background: var(--s2); }
 .ws-actions button.primary-action {
-  background: var(--vio);
+  background: var(--vio-strong);
   border-color: transparent;
-  color: oklch(0.98 0 0);
+  color: var(--on-primary);
   font-weight: 600;
+  box-shadow: var(--shadow-primary);
 }
 .ws-actions button.primary-action:hover {
-  background: oklch(0.64 0.19 279);
+  background: var(--vio-strong-h);
   border-color: transparent;
-  color: oklch(0.98 0 0);
+  color: var(--on-primary);
 }
 
 /* ─── Canvas ─────────────────────────────────────────────────── */
@@ -858,15 +873,16 @@ input:focus-visible { outline: 2px solid var(--vio-bd); outline-offset: 2px; }
 }
 .transport-btn:hover { border-color: var(--b2); color: var(--t0); background: var(--s2); }
 .transport-btn.primary {
-  background: var(--vio);
+  background: var(--vio-strong);
   border-color: transparent;
-  color: oklch(0.98 0 0);
+  color: var(--on-primary);
   min-width: 72px;
+  box-shadow: var(--shadow-primary);
 }
 .transport-btn.primary:hover {
-  background: oklch(0.64 0.19 279);
+  background: var(--vio-strong-h);
   border-color: transparent;
-  color: oklch(0.98 0 0);
+  color: var(--on-primary);
 }
 
 .tracebar { position: relative; min-width: 0; }
