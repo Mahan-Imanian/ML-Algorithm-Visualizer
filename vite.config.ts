@@ -2,7 +2,7 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
-// Project is served from a GitHub Pages project subpath.
+// base path = repo name; change if the repo is renamed
 export default defineConfig({
   base: "/ML-Algorithm-Visualizer/",
   plugins: [react()],

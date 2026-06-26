@@ -16,7 +16,6 @@ describe("pathfinding", () => {
     const { frame } = finalFrame(g, "bfs");
     expect(frame.path[0]).toBe(g.start);
     expect(frame.path.at(-1)).toBe(g.target);
-    // Open grid: shortest path length is the Manhattan distance + 1 nodes.
     expect(frame.path.length).toBe(manhattan(g.start, g.target, g.width) + 1);
   });
 

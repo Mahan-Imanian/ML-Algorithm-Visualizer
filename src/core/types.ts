@@ -9,7 +9,6 @@ export interface AlgorithmInfo {
   pseudocode: string[];
 }
 
-/** Grid model shared by every pathfinder. Cells are addressed as `row * width + col`. */
 export interface GridModel {
   width: number;
   height: number;

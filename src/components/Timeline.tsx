@@ -10,7 +10,7 @@ export function Timeline() {
   const last = Math.max(0, len - 1);
 
   return (
-    <footer className="grid grid-cols-[auto_minmax(0,1fr)_160px] items-center gap-3 rounded-xl border border-border bg-surface-1 px-3.5 max-[720px]:grid-cols-[auto_1fr]">
+    <footer className="panel grid grid-cols-[auto_minmax(0,1fr)_170px] items-center gap-4 px-4 max-[720px]:grid-cols-[auto_1fr]">
       <div className="flex gap-1.5">
         <Button variant="outline" size="icon" onClick={stepBack} disabled={!trace} aria-label="Step back">
           <ChevronLeft size={16} />

@@ -33,7 +33,6 @@ function rebuild(cameFrom: Map<number, number>, target: number): number[] {
   return path;
 }
 
-/** Runs a pathfinder and returns the ordered event trace. */
 export function runPathfinder(g: GridModel, algo: PathAlgo): GridEvent[] {
   if (algo === "bfs" || algo === "dfs") return runUnweighted(g, algo);
   return runWeighted(g, algo);
@@ -114,7 +113,6 @@ function runWeighted(g: GridModel, algo: "dijkstra" | "astar"): GridEvent[] {
   return events;
 }
 
-/** Folds the trace up to `cursor` into the visual frame. UI is a pure function of this. */
 export function deriveGrid(events: GridEvent[], cursor: number): GridFrame {
   const visited = new Set<number>();
   const frontier = new Set<number>();

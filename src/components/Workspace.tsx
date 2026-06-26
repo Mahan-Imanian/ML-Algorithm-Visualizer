@@ -38,18 +38,18 @@ export function Workspace() {
         : "Press Run to record a trace.";
 
   return (
-    <section className="grid min-h-0 grid-rows-[50px_minmax(0,1fr)] overflow-hidden rounded-xl border border-border bg-surface-1">
+    <section className="panel grid min-h-0 grid-rows-[54px_minmax(0,1fr)] overflow-hidden">
       <div className="flex items-center gap-3 border-b border-border px-3">
-        <div className="flex gap-1">
+        <div className="flex gap-1 rounded-lg border border-border bg-surface-1 p-1 shadow-[inset_0_1px_2px_oklch(0_0_0/0.35)]">
           {FAMILIES.map((f) => (
             <button
               key={f.id}
               onClick={() => setFamily(f.id)}
               className={cn(
-                "h-7 rounded-md border px-3 text-[12px] font-medium transition-colors",
+                "cursor-pointer rounded-md px-3 py-1.5 text-[12px] font-medium transition-all duration-200",
                 family === f.id
-                  ? "border-border bg-surface-3 text-foreground"
-                  : "border-transparent text-muted-foreground hover:bg-surface-2 hover:text-foreground",
+                  ? "bg-gradient-to-b from-surface-3 to-surface-2 text-foreground shadow-button ring-1 ring-border-strong"
+                  : "text-muted-foreground hover:bg-surface-2 hover:text-foreground",
               )}
             >
               {f.label}
@@ -63,7 +63,7 @@ export function Workspace() {
             onBlur={() => setTimeout(() => setPickerOpen(false), 120)}
             aria-haspopup="listbox"
             aria-expanded={pickerOpen}
-            className="flex h-[34px] w-full items-center justify-between gap-2 rounded-md border border-border bg-surface-2 px-2.5 text-left hover:border-foreground/30"
+            className="flex h-[38px] w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-border bg-surface-2 px-3 text-left shadow-button transition-colors duration-200 hover:border-border-strong hover:bg-surface-3"
           >
             <span className="flex min-w-0 flex-col">
               <strong className="truncate text-[12px] font-semibold leading-tight text-foreground">
@@ -71,12 +71,15 @@ export function Workspace() {
               </strong>
               <small className="font-mono text-[10px] text-muted-foreground">{algo.meta}</small>
             </span>
-            <ChevronDown size={14} className="shrink-0 text-muted-foreground" />
+            <ChevronDown
+              size={14}
+              className={cn("shrink-0 text-muted-foreground transition-transform duration-200", pickerOpen && "rotate-180")}
+            />
           </button>
           {pickerOpen && (
             <div
               role="listbox"
-              className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 max-h-80 overflow-auto rounded-lg border border-border bg-surface-3 p-1.5 shadow-[0_20px_50px_oklch(0_0_0/0.5)]"
+              className="panel-pop absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-80 overflow-auto rounded-xl p-1.5"
             >
               {algorithmsByFamily(family).map((a) => (
                 <button
@@ -88,8 +91,10 @@ export function Workspace() {
                     setPickerOpen(false);
                   }}
                   className={cn(
-                    "block w-full rounded-md px-2.5 py-2 text-left transition-colors hover:bg-[var(--primary-soft)]",
-                    a.id === algoId && "bg-[var(--primary-soft)]",
+                    "block w-full cursor-pointer rounded-lg px-3 py-2.5 text-left transition-colors duration-150",
+                    a.id === algoId
+                      ? "border border-[var(--primary-soft-border)] bg-[var(--primary-soft)]"
+                      : "border border-transparent hover:bg-surface-3",
                   )}
                 >
                   <strong className="block text-[12px] font-semibold text-foreground">{a.name}</strong>
@@ -111,28 +116,31 @@ export function Workspace() {
               </Button>
             </>
           ) : (
-            <Button variant="outline" onClick={regenerateData} className="gap-1.5">
+            <Button variant="secondary" onClick={regenerateData} className="gap-1.5">
               <Shuffle size={13} /> New data
             </Button>
           )}
         </div>
       </div>
 
-      <div className="relative m-2.5 overflow-hidden rounded-lg border border-border bg-background">
-        <div className="pointer-events-none absolute left-3.5 top-3 z-[4] font-mono text-[11px] text-muted-foreground">
+      <div className="dot-grid relative m-3 overflow-hidden rounded-xl">
+        <div className="pointer-events-none absolute left-3 top-3 z-[4] rounded-md border border-border bg-surface-1/70 px-2.5 py-1 font-mono text-[11px] text-muted-foreground backdrop-blur-sm">
           {status}
         </div>
         {family === "pathfinding" && (
-          <div className="pointer-events-none absolute right-3.5 top-3 z-[4] flex flex-wrap justify-end gap-2">
+          <div className="pointer-events-none absolute right-3 top-3 z-[4] flex flex-wrap justify-end gap-1.5">
             {LEGEND.map((l) => (
-              <span key={l.label} className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
-                <span className="h-2 w-2 rounded-[2px]" style={{ background: l.color }} />
+              <span
+                key={l.label}
+                className="flex items-center gap-1.5 rounded-md border border-border bg-surface-1/70 px-2 py-1 font-mono text-[10px] text-muted-foreground backdrop-blur-sm"
+              >
+                <span className="h-2 w-2 rounded-[3px]" style={{ background: l.color }} />
                 {l.label}
               </span>
             ))}
           </div>
         )}
-        <div className="absolute inset-x-3.5 bottom-3.5 top-[42px]">
+        <div className="absolute inset-x-4 bottom-4 top-[46px]">
           {family === "pathfinding" && <GridStage />}
           {family === "sorting" && <SortStage />}
           {family === "learning" && <LearnStage />}

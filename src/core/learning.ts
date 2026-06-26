@@ -5,7 +5,6 @@ export interface Point {
   y: number;
 }
 
-/** Small deterministic PRNG so generated datasets and runs are reproducible. */
 export function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
@@ -37,7 +36,6 @@ export function makeClusters(seed = 7, perCluster = 40): Point[] {
 
 export function runKMeans(points: Point[], k = 3, seed = 7, maxIter = 12): KMeansFrame[] {
   const rng = mulberry32(seed);
-  // k-means++ style seeding for stable, well-separated starts.
   const centroids: Point[] = [points[Math.floor(rng() * points.length)]];
   while (centroids.length < k) {
     const d = points.map((p) => Math.min(...centroids.map((c) => dist2(p, c))));

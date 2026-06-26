@@ -4,22 +4,24 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[12px] font-medium transition-[color,background,border-color,box-shadow,transform] disabled:pointer-events-none disabled:opacity-50 active:translate-y-px",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-[12px] font-medium transition-all duration-200 disabled:pointer-events-none disabled:opacity-40 active:translate-y-0",
   {
     variants: {
       variant: {
         primary:
-          "bg-primary text-primary-foreground font-semibold shadow-[0_4px_16px_oklch(0.54_0.2_279/0.4)] hover:bg-[var(--primary-hover)]",
+          "bg-gradient-to-b from-[var(--primary-top)] to-[var(--primary-bottom)] font-semibold text-primary-foreground shadow-primary hover:-translate-y-px hover:shadow-primary-hover",
+        secondary:
+          "border border-border-strong bg-surface-2 text-foreground shadow-button hover:border-[var(--ring)]/40 hover:bg-surface-3",
         outline:
-          "border border-border bg-transparent text-muted-foreground hover:border-foreground/30 hover:bg-surface-2 hover:text-foreground",
+          "border border-border bg-surface-1 text-muted-foreground shadow-button hover:border-border-strong hover:bg-surface-2 hover:text-foreground",
         ghost: "bg-transparent text-muted-foreground hover:bg-surface-2 hover:text-foreground",
-        soft: "border border-[var(--primary-soft-border)] bg-[var(--primary-soft)] text-[var(--primary-text)]",
+        soft: "border border-[var(--primary-soft-border)] bg-[var(--primary-soft)] text-primary-text shadow-button hover:bg-[oklch(0.62_0.2_286/0.2)]",
       },
       size: {
         sm: "h-8 px-3",
         md: "h-9 px-3.5",
         icon: "h-8 w-8",
-        tall: "h-9 min-w-[72px] px-4",
+        tall: "h-9 min-w-[76px] px-4",
       },
     },
     defaultVariants: { variant: "outline", size: "sm" },

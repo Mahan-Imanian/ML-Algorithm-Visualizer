@@ -72,24 +72,27 @@ export function Inspector() {
         <TabsTrigger value="code">Pseudocode</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="state" className="flex min-h-0 flex-col gap-3 overflow-auto p-3">
-        <div>
-          <div className="text-[13px] font-semibold text-foreground">{algo.name}</div>
-          <div className="font-mono text-[10px] text-[var(--primary-text)]">{algo.meta}</div>
+      <TabsContent value="state" className="flex min-h-0 flex-col gap-3 overflow-auto p-3.5">
+        <div className="flex flex-col gap-0.5">
+          <div className="text-[14px] font-semibold tracking-tight text-foreground">{algo.name}</div>
+          <div className="font-mono text-[10px] uppercase tracking-wider text-primary-text">{algo.meta}</div>
         </div>
-        <p className="min-h-9 rounded-md border border-border bg-surface-2 px-2.5 py-2 font-mono text-[11px] leading-relaxed text-muted-foreground">
+        <p className="min-h-9 rounded-lg border border-border bg-surface-2 px-3 py-2.5 font-mono text-[11px] leading-relaxed text-muted-foreground shadow-[inset_2px_0_0_var(--primary)]">
           {derived.note}
         </p>
-        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border">
-          {derived.metrics.map((m) => (
-            <div key={m.label} className="flex flex-col gap-1 bg-surface-2 px-3 py-2.5">
-              <dt className="font-mono text-[10px] text-muted-foreground">{m.label}</dt>
-              <dd className="m-0 font-mono text-[19px] tabular-nums leading-none text-foreground">
-                {m.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        {derived.metrics.length > 0 && (
+          <dl className="grid grid-cols-2 gap-2">
+            {derived.metrics.map((m) => (
+              <div
+                key={m.label}
+                className="flex flex-col gap-1.5 rounded-lg border border-border bg-gradient-to-b from-surface-2 to-surface-1 px-3 py-3 shadow-button"
+              >
+                <dt className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{m.label}</dt>
+                <dd className="m-0 font-mono text-[22px] tabular-nums leading-none text-foreground">{m.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </TabsContent>
 
       <TabsContent value="trace" className="min-h-0 overflow-auto p-2">

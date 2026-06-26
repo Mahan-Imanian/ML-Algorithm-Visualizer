@@ -8,7 +8,6 @@ describe("App", () => {
   it("renders the shell and the default algorithm", () => {
     render(<App />);
     expect(screen.getByText("Algoscope")).toBeInTheDocument();
-    // The algorithm name shows in both the picker and the inspector.
     expect(screen.getAllByText("Breadth-first search").length).toBeGreaterThan(0);
     expect(screen.getByText(/No trace/)).toBeInTheDocument();
   });
@@ -16,7 +15,6 @@ describe("App", () => {
   it("builds a trace when Run is pressed", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Run" }));
-    // Running flips the transport button to Pause and records events.
     expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
     expect(screen.getByText(/\d+ events/)).toBeInTheDocument();
   });

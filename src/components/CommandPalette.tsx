@@ -49,8 +49,10 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
         aria-describedby={undefined}
       >
         <DialogTitle className="sr-only">Command palette</DialogTitle>
-        <div className="grid grid-cols-[48px_1fr] items-center border-b border-border">
-          <Search size={16} className="mx-auto text-[var(--primary-text)]" />
+        <div className="grid grid-cols-[52px_1fr] items-center border-b border-border">
+          <span className="mx-auto grid h-7 w-7 place-items-center rounded-md bg-[var(--primary-soft)] text-primary-text">
+            <Search size={14} />
+          </span>
           <input
             autoFocus
             value={query}
@@ -59,25 +61,27 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
               if (e.key === "Enter" && filtered[0]) exec(filtered[0]);
             }}
             placeholder="Run A*, generate new data, sort an array…"
-            className="h-[52px] bg-transparent text-[14px] text-foreground outline-none placeholder:text-faint"
+            className="h-[54px] bg-transparent pr-4 text-[14px] text-foreground outline-none placeholder:text-faint"
             spellCheck={false}
           />
         </div>
-        <div className="max-h-[380px] overflow-auto p-1.5" role="listbox">
+        <div className="max-h-[380px] overflow-auto p-2" role="listbox">
           {filtered.length === 0 && (
-            <p className="px-3 py-4 text-center text-[12px] text-muted-foreground">No matching commands.</p>
+            <p className="px-3 py-6 text-center text-[12px] text-muted-foreground">No matching commands.</p>
           )}
           {filtered.map((c, i) => (
             <button
               key={c.id}
               onClick={() => exec(c)}
               className={cn(
-                "grid w-full grid-cols-[1fr_auto] items-center gap-2 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-[var(--primary-soft)]",
-                i === 0 && "bg-[var(--primary-soft)]/60",
+                "grid w-full cursor-pointer grid-cols-[1fr_auto] items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors duration-150",
+                i === 0
+                  ? "border-[var(--primary-soft-border)] bg-[var(--primary-soft)]"
+                  : "border-transparent hover:bg-surface-3",
               )}
             >
-              <strong className="text-[13px] font-semibold text-foreground">{c.label}</strong>
-              <kbd className="rounded border border-[var(--primary-soft-border)] bg-[var(--primary-soft)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--accent)]">
+              <strong className="text-[13px] font-medium text-foreground">{c.label}</strong>
+              <kbd className="rounded-md border border-border bg-surface-3 px-1.5 py-0.5 font-mono text-[10px] text-primary-text">
                 {c.hint}
               </kbd>
             </button>

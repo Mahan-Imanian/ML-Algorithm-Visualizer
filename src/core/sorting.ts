@@ -2,7 +2,6 @@ import type { SortEvent, SortFrame } from "./types";
 
 export type SortAlgo = "insertion" | "selection" | "bubble" | "quick";
 
-/** Runs a sort over a copy of `input` and returns the ordered event trace. */
 export function runSort(input: number[], algo: SortAlgo): SortEvent[] {
   const a = [...input];
   const events: SortEvent[] = [];
@@ -91,7 +90,6 @@ function quick(
   quick(a, i + 1, hi, events, cmp, swap, done);
 }
 
-/** Folds the trace up to `cursor` into the visual frame. */
 export function deriveSort(initial: number[], events: SortEvent[], cursor: number): SortFrame {
   const array = [...initial];
   const sorted = new Set<number>();

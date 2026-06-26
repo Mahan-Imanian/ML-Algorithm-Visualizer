@@ -172,7 +172,6 @@ export function algorithmsByFamily(family: string): AlgorithmInfo[] {
   return ALGORITHMS.filter((a) => a.family === family);
 }
 
-/** Builds an empty grid with start/target placed a third and two-thirds across the middle row. */
 export function createGrid(width = 34, height = 20): GridModel {
   const midRow = Math.floor(height / 2);
   return {
