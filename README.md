@@ -4,19 +4,18 @@
 
 **An instrument for watching algorithms and machine-learning models think.**
 
-Step, scrub, and inspect pathfinding, sorting, and learning algorithms as a replayable event trace. Built on a framework-free core with a typed React interface on top.
+Algoscope turns an algorithm run into a recording you can replay. Step through it, scrub the timeline, and read the live state, metrics, and pseudocode beside the visualization. Pathfinding, sorting, and a small machine-learning corner all share the same controls.
 
 <br>
 
 [![Live demo](https://img.shields.io/badge/Live%20Demo-Open%20App-2563eb?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0d1117)](https://mahan-imanian.github.io/ML-Algorithm-Visualizer/)
-[![CI](https://img.shields.io/github/actions/workflow/status/Mahan-Imanian/ML-Algorithm-Visualizer/ci.yml?style=for-the-badge&label=CI&labelColor=0d1117)](https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=0d1117)](LICENSE)
 
 ![React](https://img.shields.io/badge/React-18-0ea5e9?style=flat-square&logo=react&logoColor=white&labelColor=0d1117)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square&logo=typescript&logoColor=white&labelColor=0d1117)
 ![Vite](https://img.shields.io/badge/Vite-5-a855f7?style=flat-square&logo=vite&logoColor=white&labelColor=0d1117)
 ![Tailwind](https://img.shields.io/badge/Tailwind-3-38bdf8?style=flat-square&logo=tailwindcss&logoColor=white&labelColor=0d1117)
-![Tests](https://img.shields.io/badge/tests-vitest-facc15?style=flat-square&labelColor=0d1117)
+![Tests](https://img.shields.io/badge/tests-25%20passing-facc15?style=flat-square&labelColor=0d1117)
 ![WCAG](https://img.shields.io/badge/WCAG-AA-15803d?style=flat-square&labelColor=0d1117)
 
 <br>
@@ -25,15 +24,16 @@ Step, scrub, and inspect pathfinding, sorting, and learning algorithms as a repl
 
 </div>
 
-<!-- Add a screenshot or GIF of a run for the best first impression:
-<p align="center"><img src="docs/demo.gif" alt="Algoscope replaying an A* run" width="900"></p> -->
+<!-- Add a screenshot or GIF of a run here for the best first impression:
+<p align="center"><img src="docs-assets/demo.gif" alt="Algoscope replaying an A* run" width="900"></p> -->
 
 ---
 
 ## Contents
 
-- [What it is](#what-it-is)
-- [Features](#features)
+- [Why Algoscope](#why-algoscope)
+- [Highlights](#highlights)
+- [Algorithms](#algorithms)
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
 - [Scripts](#scripts)
@@ -43,43 +43,48 @@ Step, scrub, and inspect pathfinding, sorting, and learning algorithms as a repl
 - [Contributing](#contributing)
 - [License](#license)
 
-## What it is
+## Why Algoscope
 
-Algoscope treats an algorithm run as data rather than an animation. Each algorithm emits a flat list of events (a cell visited, a node pushed to the frontier, a comparison, a swap, a centroid moving), and the entire interface is a pure function of a cursor into that list. Stepping forward, stepping back, scrubbing the timeline, and exporting a session are therefore the same operation: move or serialize the cursor.
+Most visualizers play one animation and leave you to trust it. Algoscope treats a run as data instead. Each algorithm emits a flat list of events (a cell visited, a node pushed to the frontier, a comparison, a swap, a centroid moving), and the entire interface is a pure function of a cursor into that list. Stepping forward, stepping back, scrubbing, and exporting a session all reduce to the same operation: move or serialize the cursor.
 
-Three algorithm families share one transport, timeline, and inspector:
+That design is also what keeps the codebase honest. The algorithms live in a framework-free core with no DOM or React dependencies, so they can be unit-tested in isolation, and the UI never has a chance to disagree with the trace it is rendering.
 
-- **Pathfinding** on a grid you draw, with BFS, DFS, Dijkstra, and A\*
-- **Sorting** on arrays you generate, with insertion, selection, bubble, and quicksort
-- **Learning**, a machine-learning corner with k-means clustering and gradient descent
+## Highlights
 
-## Features
+- **Replayable traces** with step, scrub, and adjustable playback speed
+- **Live inspector** showing current state and metrics, the raw event log, and pseudocode with the active line highlighted
+- **Editable terrain**: draw walls and weighted cells, or generate fresh datasets for sorting and learning
+- **Command palette** (`⌘K` / `Ctrl K`) and full keyboard control
+- **JSON export** of any run
+- **Accessible by construction**: WCAG AA contrast, a high-visibility focus ring, and `prefers-reduced-motion` support
+- **A considered visual system**: layered surfaces, depth, and elevation rather than flat darkness
 
-- Replayable event trace for every run, with step, scrub, and adjustable playback speed
-- Live inspector with three views: current state and metrics, the raw event log, and pseudocode with the active line highlighted
-- Editable grid with wall and weighted-terrain tools, plus generated datasets for sorting and learning
-- Command palette (`⌘K` / `Ctrl K`) and full keyboard control
-- JSON export of any run
-- Accessible by construction: WCAG AA contrast, a high-visibility focus ring, and `prefers-reduced-motion` support
+## Algorithms
+
+| Family | Algorithms |
+|--------|------------|
+| Pathfinding | BFS, DFS, Dijkstra, A\* |
+| Sorting | Insertion, Selection, Bubble, Quicksort |
+| Learning | k-means clustering, Gradient descent |
 
 ## Architecture
 
-The project separates a framework-free engine from the React interface. The engine has no DOM or React dependencies, which is what makes the algorithms straightforward to unit test in isolation.
+A framework-free engine sits under the React interface. The engine owns the algorithms and the trace model; the UI is a thin, replaceable rendering layer driven by a single store.
 
 ```mermaid
 flowchart LR
   Core["core/ (pure TS)<br/>algorithms + trace model"] --> Store["Zustand store<br/>family · cursor · playback"]
   Store --> UI["React components<br/>grid · bars · canvas · inspector"]
-  Core -. "deriveGrid / deriveSort<br/>fold events to a frame" .-> UI
+  Core -. "deriveGrid / deriveSort<br/>fold events into a frame" .-> UI
 ```
 
 | Layer | Location | Responsibility |
 |-------|----------|----------------|
 | Core engine | `src/core` | Algorithms, the event-trace model, and `derive*` fold functions. Framework-free, fully unit-tested. |
 | State | `src/store` | A Zustand store holding the active family, grid, dataset, trace, and playback cursor. |
-| UI | `src/components` | React + Tailwind components and shadcn/ui primitives that render a frame derived from the cursor. |
+| UI | `src/components` | React and Tailwind components with shadcn/ui primitives, rendering a frame derived from the cursor. |
 
-**Stack:** React 18, TypeScript (strict), Vite, Tailwind CSS, shadcn/ui (Radix), Zustand, Vitest, Testing Library, ESLint, and Prettier.
+**Stack:** React 18, TypeScript (strict), Vite, Tailwind CSS, shadcn/ui (Radix), Zustand, Vitest, Testing Library, ESLint, Prettier.
 
 ## Quick start
 
@@ -90,7 +95,7 @@ npm install
 npm run dev
 ```
 
-Vite prints a local URL. Open it and press `Run`, or hit `⌘K` for the command palette. A hosted build is available at the [live demo](https://mahan-imanian.github.io/ML-Algorithm-Visualizer/).
+Vite prints a local URL. Open it and press `Run`, or hit `⌘K` for the command palette. A hosted build lives at the [live demo](https://mahan-imanian.github.io/ML-Algorithm-Visualizer/).
 
 ### Keyboard shortcuts
 
@@ -137,21 +142,27 @@ npm test
 
 The suite covers two layers:
 
-- **Engine** correctness: pathfinders return shortest paths on open grids, sorts actually sort, k-means inertia never increases, and gradient-descent loss is monotonically non-increasing.
-- **UI** smoke tests: the app renders, `Run` records a trace, and switching families updates the algorithm.
+- **Engine correctness:** pathfinders return shortest paths on open grids, every sort actually sorts, k-means inertia never increases, and gradient-descent loss is monotonically non-increasing.
+- **UI smoke tests:** the app renders, `Run` records a trace, and switching families updates the active algorithm.
 
 ## Deployment
 
-A GitHub Actions workflow builds the app and deploys `dist` to GitHub Pages on every push to `main`. The Vite `base` is set to the repository path so assets resolve correctly under the project subpath.
+The production build is published to GitHub Pages from the `docs/` folder on `main`. Rebuild it with:
+
+```bash
+npm run build -- --outDir docs
+```
+
+The Vite `base` is set to the repository path so assets resolve correctly under the project subpath.
 
 ## Contributing
 
-Issues and pull requests are welcome. A few guidelines keep the codebase coherent:
+Issues and pull requests are welcome. A few conventions keep the codebase coherent:
 
 - Keep new algorithms inside `src/core` and framework-free, and add a test alongside them.
 - Register an algorithm's metadata and pseudocode in `src/core/index.ts` so the inspector can display it.
-- Run `npm run lint` and `npm test` before opening a PR.
+- Run `npm run lint` and `npm test` before opening a pull request.
 
 ## License
 
-MIT. See [`LICENSE`](LICENSE) for the full text. The previous vanilla version is preserved on the [`legacy-vanilla`](https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer/tree/legacy-vanilla) branch.
+[MIT](LICENSE) © Mahan Imanian
