@@ -9,6 +9,7 @@ Algoscope turns an algorithm run into a recording you can replay. Step through i
 <br>
 
 [![Live demo](https://img.shields.io/badge/Live%20Demo-Open%20App-2563eb?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0d1117)](https://mahan-imanian.github.io/ML-Algorithm-Visualizer/)
+[![CI](https://img.shields.io/github/actions/workflow/status/Mahan-Imanian/ML-Algorithm-Visualizer/ci.yml?branch=main&style=for-the-badge&label=CI&labelColor=0d1117)](https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=0d1117)](LICENSE)
 
 ![React](https://img.shields.io/badge/React-18-0ea5e9?style=flat-square&logo=react&logoColor=white&labelColor=0d1117)
@@ -147,13 +148,7 @@ The suite covers two layers:
 
 ## Deployment
 
-The production build is published to GitHub Pages from the `docs/` folder on `main`. Rebuild it with:
-
-```bash
-npm run build -- --outDir docs
-```
-
-The Vite `base` is set to the repository path so assets resolve correctly under the project subpath.
+A GitHub Actions workflow builds the app and deploys it to GitHub Pages on every push to `main` (see [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)). The Vite `base` is set to the repository path so assets resolve correctly under the project subpath. A separate CI workflow runs lint, tests, and the build on every push and pull request.
 
 ## Contributing
 
