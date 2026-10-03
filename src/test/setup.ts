@@ -13,10 +13,13 @@ if (!Element.prototype.hasPointerCapture) {
   Element.prototype.releasePointerCapture = () => {};
 }
 
+if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {};
+
 if (!window.matchMedia) {
-  window.matchMedia = () =>
+  window.matchMedia = (query: string) =>
     ({
       matches: false,
+      media: query,
       addEventListener() {},
       removeEventListener() {},
       addListener() {},
@@ -26,3 +29,6 @@ if (!window.matchMedia) {
       },
     }) as unknown as MediaQueryList;
 }
+
+HTMLCanvasElement.prototype.getContext = (() =>
+  null) as unknown as typeof HTMLCanvasElement.prototype.getContext;
