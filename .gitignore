@@ -1,9 +1,11 @@
 node_modules
 dist
+dist-extension
 dist-ssr
 *.local
 .DS_Store
 coverage
 .vite
+.claude/
 
 *.tsbuildinfo

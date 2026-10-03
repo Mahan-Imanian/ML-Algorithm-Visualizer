@@ -1,31 +1,29 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#0b0d17" />
-    <title>Algoscope — watch algorithms and ML models think</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f8f7f3" />
+    <title>Algoscope · step through algorithms and see why they decide</title>
     <meta
       name="description"
-      content="Algoscope is an instrument for watching pathfinding, sorting, and machine-learning algorithms run. Step, scrub, and inspect every state change as a replayable event trace."
+      content="An algorithm lab for students. Step forward and backward through BFS, Dijkstra, A*, quicksort, binary search, Kruskal, k-means and gradient descent while the queue, heap and pseudocode update beside them. Compare two algorithms on the same input and share the exact experiment."
     />
-    <meta property="og:title" content="Algoscope" />
-    <meta
-      property="og:description"
-      content="Step through BFS, DFS, Dijkstra, A*, sorting, and ML algorithms one event at a time."
-    />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./icons/icon-180.png" />
     <meta property="og:type" content="website" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+    <meta property="og:title" content="Algoscope · algorithm lab" />
+    <meta property="og:description" content="Step through algorithms and see the data structure behind every decision. Compare runs side by side and share the exact experiment." />
+    <meta property="og:image" content="https://mahan-imanian.github.io/ML-Algorithm-Visualizer/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script src="./theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>
-    <noscript>Algoscope requires JavaScript to run.</noscript>
+    <noscript>Algoscope runs entirely in your browser and needs JavaScript.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

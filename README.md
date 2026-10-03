@@ -1,162 +1,95 @@
-<div align="center">
-
 # Algoscope
 
-**An instrument for watching algorithms and machine-learning models think.**
+**An algorithm lab. Step through an algorithm and see the queue, heap, pivot or gradient behind every decision.**
 
-Algoscope turns an algorithm run into a recording you can replay. Step through it, scrub the timeline, and read the live state, metrics, and pseudocode beside the visualization. Pathfinding, sorting, and a small machine-learning corner all share the same controls.
+[Open the lab](https://mahan-imanian.github.io/ML-Algorithm-Visualizer/) · [Chrome extension](#chrome-extension) · [What changed in 3.0](CHANGELOG.md) · [Audit and resolution](docs/AUDIT.md)
 
-<br>
+![A* and Dijkstra on the same grid, mid-run, with the min-heap and synced pseudocode](docs/screenshots/lab-compare.jpg)
 
-[![Live demo](https://img.shields.io/badge/Live%20Demo-Open%20App-2563eb?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0d1117)](https://mahan-imanian.github.io/ML-Algorithm-Visualizer/)
-[![CI](https://img.shields.io/github/actions/workflow/status/Mahan-Imanian/ML-Algorithm-Visualizer/ci.yml?branch=main&style=for-the-badge&label=CI&labelColor=0d1117)](https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=0d1117)](LICENSE)
+Most visualizers play an animation and stop there. Algoscope records every operation an algorithm performs (each push, pop, comparison, swap and parameter update) and lets you move through that record in both directions. Beside the visualization you see:
 
-![React](https://img.shields.io/badge/React-18-0ea5e9?style=flat-square&logo=react&logoColor=white&labelColor=0d1117)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square&logo=typescript&logoColor=white&labelColor=0d1117)
-![Vite](https://img.shields.io/badge/Vite-5-a855f7?style=flat-square&logo=vite&logoColor=white&labelColor=0d1117)
-![Tailwind](https://img.shields.io/badge/Tailwind-3-38bdf8?style=flat-square&logo=tailwindcss&logoColor=white&labelColor=0d1117)
-![Tests](https://img.shields.io/badge/tests-25%20passing-facc15?style=flat-square&labelColor=0d1117)
-![WCAG](https://img.shields.io/badge/WCAG-AA-15803d?style=flat-square&labelColor=0d1117)
+- **the data structure the algorithm is working from**: the BFS queue, the DFS stack, Dijkstra's min-heap with stale entries, A\*'s open set with g, h and f, quicksort's call stack, merge sort's buffer, Kruskal's union-find fragments, k-means clusters, the gradient vector;
+- **the pseudocode line that just ran**, with a count of how often each line has executed;
+- **a plain-language reason for the step**, built from real values ("A cheaper route to (9, 8) through (10, 8): dist 7 → 6"), plus a preview of what happens next.
 
-<br>
+Run two algorithms, or the same algorithm with different settings, on the same input, and Algoscope tells you what differs: "Both find a path of cost 46. A\* expands 55% fewer cells (295 vs 658)."
 
-[**Live demo**](https://mahan-imanian.github.io/ML-Algorithm-Visualizer/) · [Architecture](#architecture) · [Quick start](#quick-start) · [Scripts](#scripts) · [Testing](#testing)
+## What you can do
 
-</div>
+|               |                                                                                                                                                                                                                                                                                                                                                            |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Explore**   | 14 prepared experiments, each a question: _Why does greedy search walk into the trap? Can insertion sort beat merge sort? What happens when the learning rate is too high?_                                                                                                                                                                                |
+| **Configure** | Draw walls and mud by mouse, touch or keyboard; drag the start and target; generate mazes, rooms, scattered walls, weighted terrain or a heuristic trap. Choose array order (random, nearly sorted, reversed, sorted, few unique) or type your own values. Drag graph nodes. Pick datasets, k, initialisation, learning rate, momentum and starting point. |
+| **Play**      | Step by logical step (an expansion, a pass, an iteration) or by single operation. Scrub, jump between checkpoints such as _target discovered_ or _first partition done_, and choose from six speeds. 1× finishes any run in about 12 seconds.                                                                                                              |
+| **Compare**   | Side by side, or overlaid on one grid on phones, with a metric table and written verdict.                                                                                                                                                                                                                                                                  |
+| **Keep**      | Save experiments in your browser, share an exact experiment (input, seed, settings, optionally the current step) as a link, and export or import JSON files.                                                                                                                                                                                               |
 
-<!-- Add a screenshot or GIF of a run here for the best first impression:
-<p align="center"><img src="docs-assets/demo.gif" alt="Algoscope replaying an A* run" width="900"></p> -->
+### Algorithms
 
----
+| Family         | Algorithms                                                                                                                                                                                                                       |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pathfinding    | BFS, DFS, Dijkstra (binary heap, lazy deletion), A\* (Manhattan, Euclidean, octile or zero heuristic; weight 1–5), greedy best-first; optional diagonal moves                                                                    |
+| Sorting        | Insertion, selection, bubble (early exit), quicksort (last, median-of-three or seeded random pivot), merge, heap                                                                                                                 |
+| Searching      | Linear, binary, jump                                                                                                                                                                                                             |
+| Spanning trees | Prim, Kruskal (union-find)                                                                                                                                                                                                       |
+| Learning       | k-means (k-means++, random, deliberately bad, or hand-placed starting centroids; separate assign and update steps); gradient descent on linear regression (learning rate, momentum, start point, loss surface with descent path) |
 
-## Contents
+## Screens
 
-- [Why Algoscope](#why-algoscope)
-- [Highlights](#highlights)
-- [Algorithms](#algorithms)
-- [Architecture](#architecture)
-- [Quick start](#quick-start)
-- [Scripts](#scripts)
-- [Project structure](#project-structure)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
-- [License](#license)
+| Paper theme                                   | Scope theme                                                                     | Phone                                                                        |
+| --------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| ![Explore page](docs/screenshots/explore.jpg) | ![Gradient descent with two learning rates](docs/screenshots/gradient-dark.jpg) | ![Overlay comparison on a 320px screen](docs/screenshots/mobile-overlay.jpg) |
 
-## Why Algoscope
+## Keyboard
 
-Most visualizers play one animation and leave you to trust it. Algoscope treats a run as data instead. Each algorithm emits a flat list of events (a cell visited, a node pushed to the frontier, a comparison, a swap, a centroid moving), and the entire interface is a pure function of a cursor into that list. Stepping forward, stepping back, scrubbing, and exporting a session all reduce to the same operation: move or serialize the cursor.
+`Space` play/pause · `←` `→` step · `⇧←` `⇧→` single operation · `[` `]` checkpoints · `Home` `End` · `−` `=` speed · `G` step size · `N` new input · `M` maze · `C` compare · `1`–`5` grid tools · `⌘K` or `/` command palette · `?` all shortcuts.
 
-That design is also what keeps the codebase honest. The algorithms live in a framework-free core with no DOM or React dependencies, so they can be unit-tested in isolation, and the UI never has a chance to disagree with the trace it is rendering.
+On the grid: Tab to it, move with the arrow keys, press `Space` to apply the current tool, `S` to place the start and `T` to place the target. Single-key shortcuts can be turned off in Settings.
 
-## Highlights
-
-- **Replayable traces** with step, scrub, and adjustable playback speed
-- **Live inspector** showing current state and metrics, the raw event log, and pseudocode with the active line highlighted
-- **Editable terrain**: draw walls and weighted cells, or generate fresh datasets for sorting and learning
-- **Command palette** (`⌘K` / `Ctrl K`) and full keyboard control
-- **JSON export** of any run
-- **Accessible by construction**: WCAG AA contrast, a high-visibility focus ring, and `prefers-reduced-motion` support
-- **A considered visual system**: layered surfaces, depth, and elevation rather than flat darkness
-
-## Algorithms
-
-| Family | Algorithms |
-|--------|------------|
-| Pathfinding | BFS, DFS, Dijkstra, A\* |
-| Sorting | Insertion, Selection, Bubble, Quicksort |
-| Learning | k-means clustering, Gradient descent |
-
-## Architecture
-
-A framework-free engine sits under the React interface. The engine owns the algorithms and the trace model; the UI is a thin, replaceable rendering layer driven by a single store.
-
-```mermaid
-flowchart LR
-  Core["core/ (pure TS)<br/>algorithms + trace model"] --> Store["Zustand store<br/>family · cursor · playback"]
-  Store --> UI["React components<br/>grid · bars · canvas · inspector"]
-  Core -. "deriveGrid / deriveSort<br/>fold events into a frame" .-> UI
-```
-
-| Layer | Location | Responsibility |
-|-------|----------|----------------|
-| Core engine | `src/core` | Algorithms, the event-trace model, and `derive*` fold functions. Framework-free, fully unit-tested. |
-| State | `src/store` | A Zustand store holding the active family, grid, dataset, trace, and playback cursor. |
-| UI | `src/components` | React and Tailwind components with shadcn/ui primitives, rendering a frame derived from the cursor. |
-
-**Stack:** React 18, TypeScript (strict), Vite, Tailwind CSS, shadcn/ui (Radix), Zustand, Vitest, Testing Library, ESLint, Prettier.
-
-## Quick start
+## Chrome extension
 
 ```bash
-git clone https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer.git
-cd ML-Algorithm-Visualizer
-npm install
-npm run dev
+npm run build:ext
 ```
 
-Vite prints a local URL. Open it and press `Run`, or hit `⌘K` for the command palette. A hosted build lives at the [live demo](https://mahan-imanian.github.io/ML-Algorithm-Visualizer/).
+This writes `dist-extension/`, which you load at `chrome://extensions` → _Load unpacked_. Clicking the toolbar icon opens the lab in a tab. It is also available in Chrome's side panel, where the phone layout applies.
 
-### Keyboard shortcuts
+- **Manifest V3.** The only permission is `sidePanel`, which shows no install warning.
+- **No content scripts, no host permissions, no network access.** Fonts are bundled.
+- **Strict CSP:** `script-src 'self'; object-src 'none'`. The pack script fails the build if an inline or remote script ever appears.
+- **Share links point to the public site**, so recipients don't need the extension.
 
-| Key | Action |
-|-----|--------|
-| `Space` | Run / pause |
-| `→` / `←` | Step forward / back |
-| `⌘K` / `Ctrl K` | Command palette |
-| `W` / `G` / `E` | Wall / weight / erase tool |
+## Develop
 
-## Scripts
+```bash
+npm install
+npm run dev        # http://localhost:5173/ML-Algorithm-Visualizer/
+npm test           # 92 tests: engines, pseudocode sync, share format, shortcuts, UI journeys
+npm run lint
+npm run typecheck
+npm run build      # GitHub Pages build in dist/
+npm run images     # regenerate icons and og.png from real engine output
+```
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start the Vite dev server |
-| `npm run build` | Type-check and build for production |
-| `npm run preview` | Preview the production build |
-| `npm test` | Run the Vitest suite |
-| `npm run lint` | Run ESLint |
-| `npm run format` | Format with Prettier |
+Node 20 or newer.
 
-## Project structure
+### How it is built
 
 ```text
-src/
-├── core/                 # Framework-free engine
-│   ├── pathfinding.ts    # BFS, DFS, Dijkstra, A* + deriveGrid
-│   ├── sorting.ts        # insertion, selection, bubble, quick + deriveSort
-│   ├── learning.ts       # k-means, gradient descent
-│   ├── types.ts          # event and frame types
-│   ├── index.ts          # algorithm registry + pseudocode
-│   └── __tests__/        # engine unit tests
-├── store/                # Zustand trace store
-├── components/           # UI, including ui/ (shadcn primitives) and stages/
-├── App.tsx               # Layout, playback loop, keyboard shortcuts
-└── index.css             # Design tokens (WCAG-checked OKLCH palette)
+src/core/        Framework-free engine: no React, no DOM
+  grid/ sort/ search/ graph/ learn/   algorithms emit typed event traces; machines fold events into state
+  player.ts      keyframe cache: any step in a 40k-event trace in well under a millisecond
+  info.ts        names, complexity, properties and pseudocode with named line anchors per algorithm
+  experiment.ts  experiment config → runs, metrics, comparison verdicts
+  share.ts       versioned, validated link and file format
+  scenarios.ts   prepared experiments
+src/store/       Zustand stores: lab (experiment, runs, cursors, playback), library, settings, UI
+src/ui/          React: Explore, Lab (Setup / Stage / Inspector / Transport), palette, dialogs, tour
+extension/       Manifest V3 files
+scripts/         icon and social image generator, extension packer
 ```
 
-## Testing
-
-```bash
-npm test
-```
-
-The suite covers two layers:
-
-- **Engine correctness:** pathfinders return shortest paths on open grids, every sort actually sorts, k-means inertia never increases, and gradient-descent loss is monotonically non-increasing.
-- **UI smoke tests:** the app renders, `Run` records a trace, and switching families updates the active algorithm.
-
-## Deployment
-
-A GitHub Actions workflow builds the app and deploys it to GitHub Pages on every push to `main` (see [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)). The Vite `base` is set to the repository path so assets resolve correctly under the project subpath. A separate CI workflow runs lint, tests, and the build on every push and pull request.
-
-## Contributing
-
-Issues and pull requests are welcome. A few conventions keep the codebase coherent:
-
-- Keep new algorithms inside `src/core` and framework-free, and add a test alongside them.
-- Register an algorithm's metadata and pseudocode in `src/core/index.ts` so the inspector can display it.
-- Run `npm run lint` and `npm test` before opening a pull request.
+Each event names the pseudocode line it belongs to. A test runs every algorithm on its default input and every scenario, then checks that each event's line exists and says what the event does. That way the highlighted line can't drift from the code.
 
 ## License
 
