@@ -1,5 +1,6 @@
 import type { Run } from "@/core/experiment";
 import { fmtCell, heuristic } from "@/core/grid/model";
+import { bestFit, lossAt } from "@/core/learn/gradient";
 
 export interface Explanation {
   now: string;
@@ -33,8 +34,37 @@ export function explain(run: Run, cursor: number): Explanation {
   const events = run.trace.events;
   const next = cursor < events.length ? events[cursor].note : null;
   if (cursor === 0) return { now: "Ready", why: INTRO[run.algo] ?? "", next };
+  if (cursor === events.length) {
+    const end = ending(run, cursor);
+    if (end) return { ...end, next: null };
+  }
   const e = events[cursor - 1];
   return { now: e.note, why: why(run, cursor), next };
+}
+
+function ending(run: Run, cursor: number): { now: string; why: string } | null {
+  if (run.family === "sort") {
+    const s = run.player.at(cursor).state;
+    return {
+      now: `Sorted all ${s.values.length} values`,
+      why: `${s.compares} comparisons, ${s.swaps} swaps and ${s.writes} writes. Every value now sits in its final position; compare the counts against another algorithm on the same input.`,
+    };
+  }
+  if (run.family === "gradient") {
+    const s = run.player.at(cursor).state;
+    if (s.phase === "diverged") return null;
+    const { points } = run.input;
+    const opt = bestFit(points);
+    const gap = s.loss - lossAt(points, opt.m, opt.b);
+    return {
+      now: `Stopped after ${s.step} steps · loss ${s.loss.toFixed(4)}`,
+      why:
+        gap < 1e-3
+          ? `The line has reached the least-squares fit (m = ${opt.m.toFixed(3)}, b = ${opt.b.toFixed(3)}). More steps would barely move it.`
+          : `The step budget ran out ${gap.toFixed(4)} above the best possible loss. A larger learning rate or momentum would get closer in the same number of steps.`,
+    };
+  }
+  return null;
 }
 
 function why(run: Run, cursor: number): string {

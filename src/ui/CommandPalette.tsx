@@ -29,7 +29,11 @@ function PaletteBody({ onDone }: { onDone: () => void }) {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const all = useMemo(() => buildCommands(), []);
-  const results = useMemo(() => searchCommands(all, query), [all, query]);
+  const results = useMemo(() => {
+    const ranked = searchCommands(all, query);
+    const order = [...new Set(ranked.map((c) => c.group))];
+    return ranked.sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group));
+  }, [all, query]);
   const listId = useId();
   const listRef = useRef<HTMLDivElement>(null);
 

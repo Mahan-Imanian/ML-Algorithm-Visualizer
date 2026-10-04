@@ -1,20 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Run } from "@/core/experiment";
 import { fmtCell, type GridInput } from "@/core/grid/model";
 import { CLOSED, OPEN, type GridState } from "@/core/grid/machine";
-import { useLab } from "@/store/lab";
+import { baseRate, SPEEDS, useLab } from "@/store/lab";
 import { cellsOnLine, eraseMode, moveEndpoint, paintCells } from "@/store/gridEdit";
+import { usePresentedCursor } from "../clock";
 import { setupCanvas, useElementSize, usePalette, useReducedMotion, type Palette } from "../hooks";
+import { timed, useCommitCounter } from "../perf";
 
 type GridRun = Extract<Run, { family: "grid" }>;
 
 interface Props {
   run: GridRun;
-  cursor: number;
+  which: "a" | "b";
+  diff: GridRun | null;
   input: GridInput;
   editable: boolean;
   values: boolean;
-  diff?: { run: GridRun; cursor: number } | null;
   label: string;
 }
 
@@ -22,14 +24,74 @@ interface Geometry {
   s: number;
   ox: number;
   oy: number;
+  ruler: number;
 }
+
+const RULER = 16;
 
 function geometry(W: number, H: number, w: number, h: number): Geometry {
-  const s = Math.max(3, Math.floor(Math.min(W / w, H / h)));
-  return { s, ox: Math.floor((W - s * w) / 2), oy: Math.floor((H - s * h) / 2) };
+  const probe = Math.floor(Math.min(W / w, H / h));
+  const ruler = probe >= 9 && W > 360 ? RULER : 0;
+  const s = Math.max(3, Math.floor(Math.min((W - ruler) / w, (H - ruler) / h)));
+  return {
+    s,
+    ruler,
+    ox: ruler + Math.floor((W - ruler - s * w) / 2),
+    oy: ruler + Math.floor((H - ruler - s * h) / 2),
+  };
 }
 
-export function GridCanvas({ run, cursor, input, editable, values, diff, label }: Props) {
+interface Snap {
+  status: Uint8Array;
+  current: number;
+  pushedNow: number[];
+  path: number[];
+  outcome: string;
+  g: Float64Array;
+  parent: Int32Array;
+  frontier: { cell: number; pri: number; h: number }[];
+  diffStatus: Uint8Array | null;
+  diffPath: number[] | null;
+  diffCurrent: number;
+}
+
+interface Anim {
+  from: Uint8Array;
+  at: Float64Array;
+  pathKey: string;
+  pathT: number;
+  dur: number;
+}
+
+function cursorOf(which: "a" | "b") {
+  const s = useLab.getState();
+  return which === "a" ? s.cursorA : s.cursorB;
+}
+
+function takeSnap(run: GridRun, cursor: number, diff: GridRun | null, diffCursor: number): Snap {
+  const st = run.player.at(cursor).state;
+  const base = {
+    status: st.status.slice(),
+    current: st.current,
+    pushedNow: st.pushedNow.slice(),
+    path: st.path,
+    outcome: st.outcome,
+    g: st.g.slice(),
+    parent: st.parent.slice(),
+    frontier: st.frontier.slice(),
+  };
+  if (!diff) return { ...base, diffStatus: null, diffPath: null, diffCurrent: -1 };
+  const ds = diff.player.at(diffCursor).state;
+  return {
+    ...base,
+    diffStatus: ds.status.slice(),
+    diffPath: ds.path,
+    diffCurrent: ds.outcome === "running" ? ds.current : -1,
+  };
+}
+
+export function GridCanvas({ run, which, diff, input, editable, values, label }: Props) {
+  useCommitCounter("grid canvas");
   const [box, size] = useElementSize<HTMLDivElement>();
   const canvas = useRef<HTMLCanvasElement>(null);
   const palette = usePalette();
@@ -39,10 +101,6 @@ export function GridCanvas({ run, cursor, input, editable, values, diff, label }
   const setFocusCell = useLab((s) => s.setFocusCell);
   const [kbdCell, setKbdCell] = useState<number | null>(null);
   const [announce, setAnnounce] = useState("");
-  const flash = useRef<Float64Array>(new Float64Array(0));
-  const prevStatus = useRef<Uint8Array | null>(null);
-  const pathStart = useRef<{ key: string; t: number }>({ key: "", t: 0 });
-  const raf = useRef(0);
   const drag = useRef<{ kind: "paint" | "start" | "target"; last: number; erase: boolean } | null>(
     null,
   );
@@ -51,41 +109,6 @@ export function GridCanvas({ run, cursor, input, editable, values, diff, label }
     () => geometry(size.w, size.h, input.w, input.h),
     [size.w, size.h, input.w, input.h],
   );
-
-  const frame = run.player.at(cursor);
-  const state = frame.state;
-
-  const snapshot = useMemo(() => {
-    const s = run.player.at(cursor).state;
-    const ds = diff ? diff.run.player.at(diff.cursor).state : null;
-    return {
-      status: s.status.slice(),
-      current: s.current,
-      pushedNow: s.pushedNow.slice(),
-      path: s.path,
-      outcome: s.outcome,
-      g: values ? s.g.slice() : null,
-      parent: s.parent.slice(),
-      frontier: values ? s.frontier.slice() : null,
-      diffStatus: ds ? ds.status.slice() : null,
-      diffPath: ds ? ds.path : null,
-    };
-  }, [cursor, run, values, diff]);
-
-  useEffect(() => {
-    const n = input.w * input.h;
-    if (flash.current.length !== n) flash.current = new Float64Array(n);
-    const prev = prevStatus.current;
-    const now = performance.now();
-    if (prev && prev.length === n && !reduced) {
-      for (let i = 0; i < n; i++)
-        if (prev[i] !== snapshot.status[i] && snapshot.status[i] !== 0) flash.current[i] = now;
-    }
-    prevStatus.current = snapshot.status;
-    const key = snapshot.path.join(",");
-    if (key && key !== pathStart.current.key) pathStart.current = { key, t: reduced ? 0 : now };
-    if (!key) pathStart.current = { key: "", t: 0 };
-  }, [snapshot, input.w, input.h, reduced]);
 
   const terrain = useMemo(() => {
     if (size.w < 2 || typeof document === "undefined") return null;
@@ -96,45 +119,106 @@ export function GridCanvas({ run, cursor, input, editable, values, diff, label }
     return c;
   }, [size.w, size.h, geo, input, palette]);
 
-  const draw = useCallback(() => {
-    const el = canvas.current;
-    if (!el || size.w < 2) return false;
-    const ctx = setupCanvas(el, size.w, size.h);
-    if (!ctx) return false;
-    return paint(ctx, size.w, size.h, geo, input, snapshot, palette, {
-      editing,
-      values,
-      focus: kbdCell ?? focusCell,
-      flash: flash.current,
-      pathT: pathStart.current.t,
-      reduced,
-      algo: run.algo,
-      terrain,
-    });
-  }, [
-    size,
+  const view = useRef({
     geo,
     input,
-    snapshot,
     palette,
+    terrain,
     editing,
     values,
-    kbdCell,
-    focusCell,
+    focus: kbdCell ?? focusCell,
     reduced,
-    run.algo,
+    algo: run.algo,
+    w: size.w,
+    h: size.h,
+  });
+  view.current = {
+    geo,
+    input,
+    palette,
     terrain,
-  ]);
+    editing,
+    values,
+    focus: kbdCell ?? focusCell,
+    reduced,
+    algo: run.algo,
+    w: size.w,
+    h: size.h,
+  };
+
+  const snap = useRef<Snap | null>(null);
+  const anim = useRef<Anim>({
+    from: new Uint8Array(0),
+    at: new Float64Array(0),
+    pathKey: "",
+    pathT: 0,
+    dur: 180,
+  });
+  const raf = useRef(0);
+
+  const request = useRef<() => void>(() => undefined);
+  request.current = () => {
+    if (raf.current) return;
+    raf.current = requestAnimationFrame(() => {
+      raf.current = 0;
+      const el = canvas.current;
+      const v = view.current;
+      const sn = snap.current;
+      if (!el || !sn || v.w < 2) return;
+      const ctx = setupCanvas(el, v.w, v.h);
+      if (!ctx) return;
+      const more = timed("grid", () => paint(ctx, v, sn, anim.current));
+      if (more) request.current();
+    });
+  };
+
+  useLayoutEffect(() => {
+    const n = input.w * input.h;
+    const sync = (fresh: boolean) => {
+      const s = useLab.getState();
+      const next = takeSnap(run, cursorOf(which), diff, which === "a" ? s.cursorB : s.cursorA);
+      const a = anim.current;
+      const now = performance.now();
+      if (a.from.length !== n || fresh) {
+        a.from = new Uint8Array(n);
+        a.at = new Float64Array(n);
+      }
+      const prev = snap.current;
+      const rate = baseRate(s) * SPEEDS[s.speed];
+      a.dur = s.playing ? Math.max(70, Math.min(240, 900 / Math.max(1, rate))) : 200;
+      if (prev && prev.status.length === n && !view.current.reduced && !fresh) {
+        for (let i = 0; i < n; i++) {
+          if (prev.status[i] !== next.status[i]) {
+            a.from[i] = prev.status[i];
+            a.at[i] = now;
+          }
+        }
+      }
+      const key = next.path.join(",");
+      if (key !== a.pathKey) {
+        a.pathKey = key;
+        a.pathT = key && !view.current.reduced && prev && !fresh ? now : 0;
+      }
+      snap.current = next;
+      request.current();
+    };
+    sync(true);
+    return useLab.subscribe((s, p) => {
+      if (s.cursorA !== p.cursorA || s.cursorB !== p.cursorB) sync(false);
+    });
+  }, [run, diff, which, input.w, input.h]);
 
   useEffect(() => {
-    cancelAnimationFrame(raf.current);
-    const loop = () => {
-      const more = draw();
-      if (more) raf.current = requestAnimationFrame(loop);
-    };
-    loop();
-    return () => cancelAnimationFrame(raf.current);
-  }, [draw]);
+    request.current();
+  }, [geo, terrain, editing, values, kbdCell, focusCell, palette, size.w, size.h]);
+
+  useEffect(
+    () => () => {
+      cancelAnimationFrame(raf.current);
+      raf.current = 0;
+    },
+    [],
+  );
 
   const cellAt = (clientX: number, clientY: number): number => {
     const el = canvas.current;
@@ -202,15 +286,16 @@ export function GridCanvas({ run, cursor, input, editable, values, diff, label }
 
   const describe = (cell: number) => {
     const g = input;
+    const st = run.player.at(cursorOf(which)).state;
     const [r, c] = [Math.floor(cell / g.w), cell % g.w];
     const parts = [`Row ${r}, column ${c}`];
     if (cell === g.start) parts.push("start");
     if (cell === g.target) parts.push("target");
     const v = g.cells[cell];
     parts.push(v === 0 ? "wall" : v > 1 ? `cost ${v}` : "open ground");
-    if (state.status[cell] === CLOSED) parts.push(`expanded at step ${state.closedAt[cell]}`);
-    else if (state.status[cell] === OPEN) parts.push("in the frontier");
-    if (state.path.includes(cell)) parts.push("on the path");
+    if (st.status[cell] === CLOSED) parts.push(`expanded at step ${st.closedAt[cell]}`);
+    else if (st.status[cell] === OPEN) parts.push("in the frontier");
+    if (st.path.includes(cell)) parts.push("on the path");
     return parts.join(", ");
   };
 
@@ -291,7 +376,7 @@ export function GridCanvas({ run, cursor, input, editable, values, diff, label }
     <div ref={box} className="relative h-full w-full touch-none select-none">
       <canvas
         ref={canvas}
-        className="absolute inset-0 h-full w-full cursor-crosshair outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        className="absolute inset-0 h-full w-full cursor-crosshair outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
         tabIndex={0}
         role="application"
         aria-roledescription="grid"
@@ -316,7 +401,7 @@ export function GridCanvas({ run, cursor, input, editable, values, diff, label }
         {announce}
       </div>
       {focusCell !== null && focusCell < input.w * input.h && !editing && (
-        <CellCard cell={focusCell} input={input} state={state} geo={geo} algo={run.algo} />
+        <CellCard cell={focusCell} input={input} run={run} which={which} geo={geo} width={size.w} />
       )}
     </div>
   );
@@ -325,50 +410,54 @@ export function GridCanvas({ run, cursor, input, editable, values, diff, label }
 function CellCard({
   cell,
   input,
-  state,
+  run,
+  which,
   geo,
-  algo,
+  width,
 }: {
   cell: number;
   input: GridInput;
-  state: GridState;
+  run: GridRun;
+  which: "a" | "b";
   geo: Geometry;
-  algo: string;
+  width: number;
 }) {
+  const state: GridState = run.player.at(usePresentedCursor(which)).state;
+  const algo = run.algo;
   const r = Math.floor(cell / input.w);
   const c = cell % input.w;
   const status = state.status[cell];
   const g = state.g[cell];
   const parent = state.parent[cell];
-  const x = geo.ox + (c + 1) * geo.s + 8;
+  const left = geo.ox + (c + 1) * geo.s + 8;
+  const flip = left + 180 > width;
   const y = geo.oy + r * geo.s;
-  const flip = c > input.w * 0.6;
   const rows: [string, string][] = [["Cell", fmtCell(cell, input.w)]];
   const v = input.cells[cell];
   rows.push(["Terrain", v === 0 ? "wall" : v > 1 ? `cost ${v}` : "cost 1"]);
+  rows.push(["State", status === CLOSED ? "expanded" : status === OPEN ? "frontier" : "unseen"]);
   if (status) {
-    rows.push(["State", status === CLOSED ? "expanded" : "frontier"]);
     if (Number.isFinite(g))
       rows.push([
         algo === "bfs" || algo === "dfs" ? "Moves" : "g",
         String(Math.round(g * 100) / 100),
       ]);
     if (parent >= 0) rows.push(["Parent", fmtCell(parent, input.w)]);
-    if (state.discoveredAt[cell] > 0) rows.push(["Found at", `step ${state.discoveredAt[cell]}`]);
-    if (state.closedAt[cell] > 0) rows.push(["Expanded", `step ${state.closedAt[cell]}`]);
+    if (state.discoveredAt[cell] > 0) rows.push(["Found at", `op ${state.discoveredAt[cell]}`]);
+    if (state.closedAt[cell] > 0) rows.push(["Expanded", `op ${state.closedAt[cell]}`]);
   }
   return (
     <div
-      className="pointer-events-none absolute z-10 min-w-[150px] animate-fade-in rounded border border-rule-strong bg-surface/95 px-2.5 py-2 text-xs shadow-pop"
+      className="pointer-events-none absolute z-10 w-[172px] border border-rule-strong bg-surface px-2.5 py-2 text-xs shadow-pop"
       style={
         flip
-          ? { right: Math.max(4, geo.ox + (input.w - c) * geo.s + 8), top: Math.max(4, y) }
-          : { left: x, top: Math.max(4, y) }
+          ? { left: Math.max(4, geo.ox + c * geo.s - 180), top: Math.max(4, y) }
+          : { left, top: Math.max(4, y) }
       }
       aria-hidden="true"
     >
       {rows.map(([k, val]) => (
-        <div key={k} className="flex justify-between gap-4">
+        <div key={k} className="flex h-[18px] items-center justify-between gap-4">
           <span className="text-ink-3">{k}</span>
           <span className="readout text-ink">{val}</span>
         </div>
@@ -377,23 +466,37 @@ function CellCard({
   );
 }
 
-interface Snap {
-  status: Uint8Array;
-  current: number;
-  pushedNow: number[];
-  path: number[];
-  outcome: string;
-  g: Float64Array | null;
-  parent: Int32Array;
-  frontier: { cell: number; pri: number; h: number }[] | null;
-  diffStatus: Uint8Array | null;
-  diffPath: number[] | null;
-}
-
 function paintTerrain(ctx: CanvasRenderingContext2D, geo: Geometry, input: GridInput, p: Palette) {
-  const { s, ox, oy } = geo;
+  const { s, ox, oy, ruler } = geo;
   const { w, h, cells } = input;
   const gap = s >= 7 ? 1 : 0;
+  if (ruler) {
+    ctx.fillStyle = p.ink3;
+    ctx.strokeStyle = p.ruleStrong;
+    ctx.lineWidth = 1;
+    ctx.font = '500 9px "IBM Plex Mono", monospace';
+    const every = s >= 14 ? 5 : 10;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.beginPath();
+    for (let c = 0; c <= w; c++) {
+      const x = Math.round(ox + c * s) + 0.5;
+      const major = c % every === 0;
+      ctx.moveTo(x, oy - (major ? 6 : 3));
+      ctx.lineTo(x, oy);
+      if (major && c < w) ctx.fillText(String(c), ox + c * s + s / 2, oy - 6);
+    }
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    for (let r = 0; r <= h; r++) {
+      const y = Math.round(oy + r * s) + 0.5;
+      const major = r % every === 0;
+      ctx.moveTo(ox - (major ? 6 : 3), y);
+      ctx.lineTo(ox, y);
+      if (major && r < h) ctx.fillText(String(r), ox - 7, oy + r * s + s / 2);
+    }
+    ctx.stroke();
+  }
   ctx.fillStyle = p.gridLine;
   ctx.fillRect(ox, oy, s * w, s * h);
   for (let i = 0; i < w * h; i++) {
@@ -427,77 +530,104 @@ function paintTerrain(ctx: CanvasRenderingContext2D, geo: Geometry, input: GridI
   }
 }
 
-function paint(
-  ctx: CanvasRenderingContext2D,
-  W: number,
-  H: number,
-  geo: Geometry,
-  input: GridInput,
-  snap: Snap,
-  p: Palette,
-  o: {
-    editing: boolean;
-    values: boolean;
-    focus: number | null;
-    flash: Float64Array;
-    pathT: number;
-    reduced: boolean;
-    algo: string;
-    terrain: HTMLCanvasElement | null;
-  },
-): boolean {
-  const { s, ox, oy } = geo;
+interface View {
+  geo: Geometry;
+  input: GridInput;
+  palette: Palette;
+  terrain: HTMLCanvasElement | null;
+  editing: boolean;
+  values: boolean;
+  focus: number | null;
+  reduced: boolean;
+  algo: string;
+  w: number;
+  h: number;
+}
+
+const ease = (t: number) => 1 - (1 - t) * (1 - t) * (1 - t);
+
+function paint(ctx: CanvasRenderingContext2D, v: View, snap: Snap, a: Anim): boolean {
+  const { s, ox, oy } = v.geo;
+  const { input, palette: p } = v;
   const { w, h, cells } = input;
   const now = performance.now();
   let animating = false;
-  ctx.clearRect(0, 0, W, H);
-  if (o.terrain) {
+  ctx.clearRect(0, 0, v.w, v.h);
+  if (v.terrain) {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(o.terrain, 0, 0);
+    ctx.drawImage(v.terrain, 0, 0);
     ctx.restore();
-  } else paintTerrain(ctx, geo, input, p);
+  } else paintTerrain(ctx, v.geo, input, p);
   const gap = s >= 7 ? 1 : 0;
-  const showRun = !o.editing;
+  const inner = s - gap;
+  const showRun = !v.editing;
   const pathSet = new Set(showRun ? snap.path : []);
+  const colorOf = (st: number) => (st === CLOSED ? p.closed : st === OPEN ? p.open : null);
 
-  for (let i = 0; i < w * h; i++) {
-    const v = cells[i];
-    if (v === 0 || !showRun) continue;
-    let fill: string | null = null;
-    if (snap.diffStatus) {
-      const a = snap.status[i] === CLOSED;
-      const b = snap.diffStatus[i] === CLOSED;
-      fill = a && b ? p.closed : a ? p.rgb("st-a", 0.45) : b ? p.rgb("st-b", 0.4) : null;
-    } else if (snap.status[i] === CLOSED) fill = p.closed;
-    else if (snap.status[i] === OPEN) fill = p.open;
-    const t = o.reduced ? 0 : o.flash[i];
-    if (!fill && !t) continue;
-    const x = ox + (i % w) * s;
-    const y = oy + Math.floor(i / w) * s;
-    if (fill) {
-      ctx.globalAlpha = v > 1 ? 0.8 : 1;
-      ctx.fillStyle = fill;
-      ctx.fillRect(x + gap, y + gap, s - gap, s - gap);
-      ctx.globalAlpha = 1;
-    }
-    if (t) {
-      const age = (now - t) / 320;
-      if (age < 1) {
-        ctx.fillStyle = p.rgb("signal", 0.55 * (1 - age) * (1 - age));
-        ctx.fillRect(x + gap, y + gap, s - gap, s - gap);
-        animating = true;
+  if (showRun) {
+    for (let i = 0; i < w * h; i++) {
+      const cv = cells[i];
+      if (cv === 0) continue;
+      const st = snap.status[i];
+      let fill: string | null;
+      if (snap.diffStatus) {
+        const ca = st === CLOSED;
+        const cb = snap.diffStatus[i] === CLOSED;
+        fill = ca && cb ? p.closed : ca ? p.rgb("st-a", 0.45) : cb ? p.rgb("st-b", 0.4) : null;
+      } else fill = colorOf(st);
+      const t0 = a.at[i];
+      const age = t0 && !v.reduced ? (now - t0) / a.dur : 1;
+      if (!fill && age >= 1) continue;
+      const x = ox + (i % w) * s + gap;
+      const y = oy + Math.floor(i / w) * s + gap;
+      const alpha = cv > 1 ? 0.8 : 1;
+      if (age >= 1 || snap.diffStatus) {
+        if (fill) {
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = fill;
+          ctx.fillRect(x, y, inner, inner);
+        }
+        continue;
+      }
+      animating = true;
+      const k = ease(Math.max(0, age));
+      const from = colorOf(a.from[i]);
+      if (st === OPEN && !from) {
+        const sz = inner * (0.35 + 0.65 * k);
+        const off = (inner - sz) / 2;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.open;
+        ctx.fillRect(x + off, y + off, sz, sz);
+      } else {
+        if (from) {
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = from;
+          ctx.fillRect(x, y, inner, inner);
+        }
+        if (fill) {
+          ctx.globalAlpha = alpha * k;
+          ctx.fillStyle = fill;
+          ctx.fillRect(x, y, inner, inner);
+        }
+        if (st === CLOSED && inner >= 6) {
+          ctx.globalAlpha = 1 - k;
+          ctx.strokeStyle = p.signal;
+          ctx.lineWidth = Math.max(1, Math.min(2, s * 0.12));
+          ctx.strokeRect(x + 0.5, y + 0.5, inner - 1, inner - 1);
+        }
       }
     }
+    ctx.globalAlpha = 1;
   }
 
-  if (showRun && o.values && s >= 22 && snap.g) {
+  if (showRun && v.values && s >= 22) {
     const fs = Math.max(9, Math.min(12, Math.floor(s * 0.32)));
     ctx.font = `500 ${fs}px "IBM Plex Mono", monospace`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     const fMap = new Map<number, number>();
-    if (snap.frontier && (o.algo === "astar" || o.algo === "greedy"))
+    if (v.algo === "astar" || v.algo === "greedy")
       for (const e of snap.frontier)
         if (!fMap.has(e.cell) || e.pri < fMap.get(e.cell)!) fMap.set(e.cell, e.pri);
     for (let i = 0; i < w * h; i++) {
@@ -521,25 +651,29 @@ function paint(
   ];
 
   if (showRun && snap.current >= 0 && snap.pushedNow.length) {
-    ctx.strokeStyle = p.rgb("signal", 0.8);
-    ctx.lineWidth = Math.max(1, s * 0.08);
+    ctx.strokeStyle = p.rgb("signal", 0.85);
+    ctx.lineWidth = Math.max(1, s * 0.09);
+    ctx.lineCap = "round";
     const [cx, cy] = center(snap.current);
     for (const n of snap.pushedNow) {
       const [nx, ny] = center(n);
+      const t0 = a.at[n];
+      const k = t0 && !v.reduced ? ease(Math.min(1, (now - t0) / a.dur)) : 1;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + (nx - cx) * 0.78, cy + (ny - cy) * 0.78);
+      ctx.lineTo(cx + (nx - cx) * 0.8 * k, cy + (ny - cy) * 0.8 * k);
       ctx.stroke();
     }
+    ctx.lineCap = "butt";
   }
 
-  if (showRun && o.focus !== null && o.focus >= 0 && o.focus < w * h && snap.parent[o.focus] >= 0) {
+  if (showRun && v.focus !== null && v.focus >= 0 && v.focus < w * h && snap.parent[v.focus] >= 0) {
     ctx.save();
     ctx.setLineDash([3, 3]);
     ctx.strokeStyle = p.ink;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    let c = o.focus;
+    let c = v.focus;
     ctx.moveTo(...center(c));
     let guard = 0;
     while (snap.parent[c] >= 0 && guard++ < w * h) {
@@ -552,6 +686,7 @@ function paint(
 
   const drawPath = (path: number[], color: string, progress: number, dashed = false) => {
     if (path.length < 2) return;
+    const pts = [...path].reverse();
     ctx.save();
     ctx.strokeStyle = color;
     ctx.lineWidth = Math.max(2, s * 0.26);
@@ -559,26 +694,37 @@ function paint(
     ctx.lineCap = "round";
     if (dashed) ctx.setLineDash([s * 0.5, s * 0.4]);
     ctx.beginPath();
-    const segs = (path.length - 1) * progress;
-    ctx.moveTo(...center(path[0]));
-    for (let i = 1; i < path.length; i++) {
+    const segs = (pts.length - 1) * progress;
+    ctx.moveTo(...center(pts[0]));
+    let head: [number, number] = center(pts[0]);
+    for (let i = 1; i < pts.length; i++) {
       if (i - 1 >= segs) break;
-      const [x1, y1] = center(path[i]);
+      const [x1, y1] = center(pts[i]);
       if (i > segs) {
-        const [x0, y0] = center(path[i - 1]);
+        const [x0, y0] = center(pts[i - 1]);
         const f = segs - (i - 1);
-        ctx.lineTo(x0 + (x1 - x0) * f, y0 + (y1 - y0) * f);
-      } else ctx.lineTo(x1, y1);
+        head = [x0 + (x1 - x0) * f, y0 + (y1 - y0) * f];
+        ctx.lineTo(...head);
+      } else {
+        head = [x1, y1];
+        ctx.lineTo(x1, y1);
+      }
     }
     ctx.stroke();
+    if (progress < 1) {
+      ctx.fillStyle = p.signal;
+      ctx.beginPath();
+      ctx.arc(head[0], head[1], Math.max(2.5, s * 0.22), 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
   };
 
   if (showRun && snap.path.length) {
     let prog = 1;
-    if (o.pathT) {
-      prog = Math.min(1, (now - o.pathT) / Math.min(900, 220 + snap.path.length * 14));
-      prog = 1 - (1 - prog) ** 3;
+    if (a.pathT) {
+      prog = Math.min(1, (now - a.pathT) / Math.min(1100, 260 + snap.path.length * 16));
+      prog = ease(prog);
       if (prog < 1) animating = true;
     }
     drawPath(snap.path, snap.diffStatus ? p.a : p.path, prog);
@@ -586,10 +732,21 @@ function paint(
   if (showRun && snap.diffPath && snap.diffPath.length) drawPath(snap.diffPath, p.b, 1, true);
 
   if (showRun && snap.current >= 0 && !pathSet.has(snap.current)) {
-    const x = ox + (snap.current % w) * s;
-    const y = oy + Math.floor(snap.current / w) * s;
+    const [cx, cy] = center(snap.current);
     ctx.fillStyle = p.signal;
-    ctx.fillRect(x + gap, y + gap, s - gap, s - gap);
+    ctx.fillRect(cx - inner / 2, cy - inner / 2, inner, inner);
+    if (s >= 8) {
+      ctx.strokeStyle = p.signal;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx - s / 2 - 1.5, cy - s / 2 - 1.5, s + 3, s + 3);
+    }
+  }
+
+  if (showRun && snap.diffCurrent >= 0) {
+    const [bx, by] = center(snap.diffCurrent);
+    ctx.strokeStyle = p.b;
+    ctx.lineWidth = Math.max(1.5, s * 0.14);
+    ctx.strokeRect(bx - inner / 2 + 1, by - inner / 2 + 1, inner - 2, inner - 2);
   }
 
   const [sx, sy] = center(input.start);
@@ -624,9 +781,9 @@ function paint(
   ctx.arc(tx, ty, Math.max(1.2, s * 0.1), 0, Math.PI * 2);
   ctx.fill();
 
-  if (o.focus !== null && o.focus >= 0 && o.focus < w * h) {
-    const x = ox + (o.focus % w) * s;
-    const y = oy + Math.floor(o.focus / w) * s;
+  if (v.focus !== null && v.focus >= 0 && v.focus < w * h) {
+    const x = ox + (v.focus % w) * s;
+    const y = oy + Math.floor(v.focus / w) * s;
     ctx.strokeStyle = p.focus;
     ctx.lineWidth = 2;
     ctx.strokeRect(x + 1, y + 1, s - 1, s - 1);

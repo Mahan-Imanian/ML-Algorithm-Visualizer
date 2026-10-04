@@ -21,7 +21,12 @@ const config: Config = {
         sunken: c("sunken"),
         rule: { DEFAULT: c("rule"), strong: c("rule-strong") },
         ink: { DEFAULT: c("ink"), 2: c("ink-2"), 3: c("ink-3") },
-        signal: { DEFAULT: c("signal"), ink: c("signal-ink"), soft: c("signal-soft") },
+        signal: {
+          DEFAULT: c("signal"),
+          ink: c("signal-ink"),
+          soft: c("signal-soft"),
+          on: c("on-signal"),
+        },
         focus: c("focus"),
         st: {
           open: c("st-open"),

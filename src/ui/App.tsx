@@ -11,6 +11,7 @@ import { Button, TooltipProvider } from "./primitives";
 import { useShortcuts } from "./shortcuts";
 import { Toaster } from "./toast";
 import { Tour } from "./Tour";
+import { PerfHud } from "./PerfHud";
 
 const Lab = lazy(() => import("./lab/Lab").then((m) => ({ default: m.Lab })));
 
@@ -101,7 +102,7 @@ export default function App() {
       </a>
       <div className={fullHeight ? "flex h-dvh flex-col overflow-hidden" : "min-h-dvh"}>
         <Header route={route.name} />
-        <div
+        <main
           id="main"
           tabIndex={-1}
           className={fullHeight ? "min-h-0 flex-1 outline-none" : "outline-none"}
@@ -117,7 +118,7 @@ export default function App() {
               </Suspense>
             )}
           </ErrorBoundary>
-        </div>
+        </main>
       </div>
       <CommandPalette />
       <ShareDialog />
@@ -126,6 +127,7 @@ export default function App() {
       <ShortcutsDialog />
       <SettingsDialog />
       <Tour />
+      <PerfHud />
       <Toaster offset={route.name === "lab" && layout === "narrow" ? 150 : 24} />
     </TooltipProvider>
   );

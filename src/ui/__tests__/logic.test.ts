@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { defaultExperiment, runVariant } from "@/core/experiment";
 import { layoutFor } from "@/lib/layout";
+import { explain } from "../lab/explain";
 import { parseHash } from "@/lib/router";
 import { searchCommands, type Command } from "../commands";
 import { shortcutFor } from "../shortcuts";
@@ -83,7 +85,7 @@ describe("command search", () => {
     {
       id: "c",
       label: "Generate maze",
-      group: "Experiment",
+      group: "This experiment",
       keywords: "grid map maze",
       run: () => {},
     },
@@ -94,7 +96,13 @@ describe("command search", () => {
       keywords: "Sorted input and a last-element pivot quick",
       run: () => {},
     },
-    { id: "e", label: "Share link", group: "Experiment", keywords: "copy url send", run: () => {} },
+    {
+      id: "e",
+      label: "Share link",
+      group: "This experiment",
+      keywords: "copy url send",
+      run: () => {},
+    },
   ];
   it("finds algorithms by abbreviation and commands by intent", () => {
     expect(searchCommands(cmds, "bfs")[0].id).toBe("a");
@@ -105,6 +113,17 @@ describe("command search", () => {
     expect(searchCommands(cmds, "copy")[0].id).toBe("e");
     expect(searchCommands(cmds, "zzzz")).toHaveLength(0);
     expect(searchCommands(cmds, "")).toHaveLength(cmds.length);
+  });
+});
+
+describe("captions", () => {
+  it("closes every sort and gradient run with a summary, not a leftover sub-step", () => {
+    for (const algo of ["bubble", "heap", "quick", "gradient"] as const) {
+      const run = runVariant(defaultExperiment(algo), "a")!;
+      const end = explain(run, run.trace.events.length);
+      expect(end.now, algo).toMatch(/^(Sorted all \d+ values|Stopped after \d+ steps)/);
+      expect(end.next).toBeNull();
+    }
   });
 });
 

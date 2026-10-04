@@ -54,7 +54,7 @@ describe("lab", () => {
   it("never shows an empty state: an experiment is ready before Run", async () => {
     render(<App />);
     await go("/lab?algo=dijkstra");
-    expect(screen.getByRole("button", { name: "Play" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Run" })).toBeInTheDocument();
     expect(
       screen.getByRole("list", { name: /Dijkstra's algorithm pseudocode/i }),
     ).toBeInTheDocument();
@@ -146,5 +146,56 @@ describe("command palette", () => {
     expect(first).toHaveTextContent("Generate maze");
     fireEvent.keyDown(input, { key: "ArrowDown" });
     expect(input.getAttribute("aria-activedescendant")).not.toBe(first.id);
+  });
+
+  it("types BFS in capitals and switches to breadth-first search with Enter", async () => {
+    render(<App />);
+    await go("/lab?algo=dijkstra");
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    const input = screen.getByRole("combobox", { name: /search commands/i });
+    fireEvent.change(input, { target: { value: "BFS" } });
+    expect(within(screen.getByRole("listbox")).getAllByRole("option")[0]).toHaveTextContent(
+      "Breadth-first search",
+    );
+    fireEvent.keyDown(input, { key: "Enter" });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    expect(useLab.getState().exp.a.algo).toBe("bfs");
+  });
+});
+
+describe("presentation", () => {
+  it("enters with P, toggles panels with C/S/E/M and leaves with Escape", async () => {
+    render(<App />);
+    await go("/lab?algo=bfs");
+    fireEvent.keyDown(window, { key: "p" });
+    const stage = screen.getByRole("region", { name: "Presentation" });
+    expect(stage).toBeInTheDocument();
+    const code = within(stage).getByRole("button", { name: /^Code/ });
+    expect(code).toHaveAttribute("aria-pressed", "true");
+    fireEvent.keyDown(window, { key: "c" });
+    expect(code).toHaveAttribute("aria-pressed", "false");
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("region", { name: "Presentation" })).toBeNull();
+  });
+
+  it("bookmarks a step and jumps back to it as a milestone", async () => {
+    render(<App />);
+    await go("/lab?algo=bfs");
+    const s = () => useLab.getState();
+    act(() => {
+      s().step(1);
+      s().step(1);
+      s().step(1);
+    });
+    const at = s().cursorA;
+    fireEvent.keyDown(window, { key: "b" });
+    expect(s().bookmarks).toContain(at);
+    fireEvent.keyDown(window, { key: "End" });
+    act(() => {
+      while (s().cursorA > at) s().checkpoint(-1);
+    });
+    expect(s().cursorA).toBe(at);
   });
 });

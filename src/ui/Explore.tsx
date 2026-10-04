@@ -86,11 +86,8 @@ export function Explore() {
             </a>
           )}
         </div>
-        <a
-          href="#/lab?s=astar-vs-dijkstra"
-          className="group block border border-rule bg-surface"
-          aria-label="Open the A* versus Dijkstra experiment"
-        >
+        <a href="#/lab?s=astar-vs-dijkstra" className="group block border border-rule bg-surface">
+          <span className="sr-only">Open the A* versus Dijkstra experiment. </span>
           <Thumb
             build={hero}
             label="A* versus Dijkstra on the same grid. Cells only Dijkstra expanded are shaded orange; both find the same path."

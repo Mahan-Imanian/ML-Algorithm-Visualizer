@@ -270,6 +270,10 @@ const SHORTCUTS: [string, string[]][] = [
   ["Grid tools: wall, mud, erase, start, target", ["1", "2", "3", "4", "5"]],
   ["Command palette", [`${MOD} K`, "/"]],
   ["Save experiment", [`${MOD} S`]],
+  ["Bookmark the current step", ["B"]],
+  ["Present full screen / exit", ["P", "Esc"]],
+  ["In presentation: code, state, explanation, metrics", ["C", "S", "E", "M"]],
+  ["Frame monitor", ["H"]],
   ["This list", ["?"]],
 ];
 

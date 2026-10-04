@@ -5,7 +5,8 @@ import type { GridExp } from "@/core/experiment";
 import { parseHash } from "@/lib/router";
 import { useLab, type Tool } from "@/store/lab";
 import { useSettings } from "@/store/settings";
-import { useUI } from "@/store/ui";
+import { useUI, type PresentPanel } from "@/store/ui";
+import { enterPresentation, exitPresentation } from "./presentation";
 import { regenerate, suggestB } from "./lab/variants";
 
 export type ShortcutAction =
@@ -28,6 +29,11 @@ export type ShortcutAction =
   | "faster"
   | "slower"
   | "help"
+  | "present"
+  | "exit-present"
+  | "hud"
+  | "bookmark"
+  | `panel:${PresentPanel}`
   | `tool:${Tool}`;
 
 interface KeyLike {
@@ -47,7 +53,7 @@ const ACTIVATABLE =
 
 export function shortcutFor(
   e: KeyLike,
-  opts: { inLab: boolean; singleKey: boolean },
+  opts: { inLab: boolean; singleKey: boolean; present?: boolean },
 ): ShortcutAction | null {
   const el = e.target instanceof Element ? e.target : null;
   const mod = e.metaKey || e.ctrlKey;
@@ -59,6 +65,17 @@ export function shortcutFor(
   if (e.key === "/") return "palette";
   if (e.key === "?") return "help";
   if (!opts.inLab) return null;
+  if (opts.present && e.key === "Escape") return "exit-present";
+  if (opts.present && !el?.closest('[role="application"]')) {
+    const panel: Record<string, PresentPanel> = {
+      c: "code",
+      s: "state",
+      e: "explain",
+      m: "metrics",
+    };
+    const p = panel[e.key.toLowerCase()];
+    if (p) return `panel:${p}`;
+  }
   const inComposite = !!el?.closest(COMPOSITE);
   const onActivatable = !!el?.closest(ACTIVATABLE);
   switch (e.key) {
@@ -84,6 +101,9 @@ export function shortcutFor(
   if (k === "m") return "maze";
   if (k === "c") return "compare";
   if (k === "g") return "gran";
+  if (k === "p") return "present";
+  if (k === "h") return "hud";
+  if (k === "b") return "bookmark";
   const tools: Record<string, Tool> = {
     "1": "wall",
     "2": "weight",
@@ -152,7 +172,16 @@ export function runShortcut(action: ShortcutAction) {
       return lab.setSpeed(lab.speed + 1);
     case "slower":
       return lab.setSpeed(lab.speed - 1);
+    case "present":
+      return ui.present ? exitPresentation() : enterPresentation();
+    case "exit-present":
+      return exitPresentation();
+    case "hud":
+      return ui.setHud(!ui.hud);
+    case "bookmark":
+      return lab.toggleBookmark();
     default:
+      if (action.startsWith("panel:")) return ui.togglePanel(action.slice(6) as PresentPanel);
       if (action.startsWith("tool:") && lab.exp.family === "grid")
         lab.setTool(action.slice(5) as Tool);
   }
@@ -165,6 +194,7 @@ export function useShortcuts() {
       const action = shortcutFor(e, {
         inLab: parseHash(window.location.hash).name === "lab",
         singleKey: useSettings.getState().singleKey,
+        present: useUI.getState().present,
       });
       if (!action) return;
       if (action !== "palette" && useUI.getState().dialog) return;

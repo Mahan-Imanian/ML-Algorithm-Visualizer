@@ -68,10 +68,8 @@ function AlgoSwitcher() {
   return (
     <MenuRoot>
       <MenuTrigger asChild>
-        <button
-          className="flex h-8 min-w-0 items-center gap-2 rounded border border-rule-strong bg-surface pl-2.5 pr-2 text-left hover:bg-sunken"
-          aria-label={`Algorithm: ${info.name}. Change algorithm`}
-        >
+        <button className="flex h-8 min-w-0 items-center gap-2 rounded border border-rule-strong bg-surface pl-2.5 pr-2 text-left hover:bg-sunken">
+          <span className="sr-only">Change algorithm: </span>
           <span className="hidden text-xs text-ink-3 sm:inline">{familyName(info.family)}</span>
           <span className="hidden text-ink-3 sm:inline">/</span>
           <span className="truncate text-sm font-medium">{info.name}</span>
@@ -173,13 +171,16 @@ export function Header({ route }: { route: "explore" | "lab" | "saved" }) {
         <Button
           variant="ghost"
           onClick={() => open("palette")}
-          aria-label="Search commands and algorithms"
           className={cn("text-ink-2", narrow ? "w-8 px-0" : "w-auto")}
         >
           <Search />
-          {!narrow && (
+          {narrow ? (
+            <span className="sr-only">Search commands and algorithms</span>
+          ) : (
             <span className="flex items-center gap-2">
-              Search
+              <span>
+                Search<span className="sr-only"> commands and algorithms</span>
+              </span>
               <span className="readout text-2xs text-ink-3">{isMac ? "⌘K" : "Ctrl K"}</span>
             </span>
           )}

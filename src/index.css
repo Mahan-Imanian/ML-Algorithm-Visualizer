@@ -14,8 +14,9 @@
   --ink: 24 26 25;
   --ink-2: 66 69 70;
   --ink-3: 98 101 96;
-  --signal: 224 74 27;
+  --signal: 200 62 20;
   --signal-ink: 168 48 12;
+  --on-signal: 255 255 255;
   --signal-soft: 248 222 210;
   --focus: 22 89 199;
   --st-open: 227 161 38;
@@ -45,12 +46,13 @@
   --ink-3: 138 144 137;
   --signal: 255 106 61;
   --signal-ink: 255 142 106;
+  --on-signal: 13 15 16;
   --signal-soft: 64 32 22;
   --focus: 110 168 255;
   --st-open: 215 154 46;
   --st-closed: 38 70 82;
   --st-path: 61 214 140;
-  --st-wall: 96 105 112;
+  --st-wall: 54 61 66;
   --st-weight: 52 47 34;
   --st-a: 232 130 88;
   --st-b: 120 156 245;

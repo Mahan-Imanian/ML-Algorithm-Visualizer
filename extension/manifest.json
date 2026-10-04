@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Algoscope: Algorithm Lab",
   "short_name": "Algoscope",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Step through BFS, Dijkstra, A*, sorts, searches, spanning trees, k-means and gradient descent with the live data structures beside them.",
   "minimum_chrome_version": "116",
   "icons": {
