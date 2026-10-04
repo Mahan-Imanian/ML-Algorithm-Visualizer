@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { compareInsights, finalMetrics, type Run } from "@/core/experiment";
-import { getAlgo, type AlgoId } from "@/core/info";
+import { DEPTH, getAlgo, type AlgoId } from "@/core/info";
 import { SCENARIOS } from "@/core/scenarios";
 import { cn } from "@/lib/utils";
 import { navigate } from "@/lib/router";
@@ -9,6 +9,7 @@ import { Check, Close } from "../icons";
 
 export function AboutPanel({ algo }: { algo: AlgoId }) {
   const info = getAlgo(algo);
+  const depth = DEPTH[algo];
   const related = SCENARIOS.filter((s) => s.algos.includes(algo));
   const c = info.complexity;
   return (
@@ -55,6 +56,29 @@ export function AboutPanel({ algo }: { algo: AlgoId }) {
         ))}
       </ul>
       <p className="border-l-2 border-signal pl-3 text-sm">{info.watch}</p>
+      <div className="border-t border-rule">
+        {(
+          [
+            ["State it keeps", depth.maintains],
+            ["Assumes", depth.assumes],
+            ["Use it for", depth.useWhen],
+            ["Trade-off", depth.tradeoff],
+          ] as const
+        ).map(([k, v]) => (
+          <details key={k} className="group border-b border-rule" open={k === "State it keeps"}>
+            <summary className="flex cursor-pointer list-none items-center justify-between py-2 text-sm font-medium">
+              <span>{k}</span>
+              <span
+                className="text-ink-3 transition-transform group-open:rotate-90"
+                aria-hidden="true"
+              >
+                ›
+              </span>
+            </summary>
+            <p className="pb-3 text-sm text-ink-2">{v}</p>
+          </details>
+        ))}
+      </div>
       {related.length > 0 && (
         <div>
           <h4 className="label mb-2">Try</h4>
@@ -141,7 +165,74 @@ export function ComparePanel({ a, b, la, lb }: { a: Run; b: Run; la: string; lb:
       <p className="mt-2 text-xs text-ink-3">
         Bold marks the better value where lower or higher is clearly better.
       </p>
+      <SeriesChart a={a} b={b} />
     </div>
+  );
+}
+
+function SeriesChart({ a, b }: { a: Run; b: Run }) {
+  const W = 300;
+  const H = 120;
+  const log = a.family === "gradient";
+  const prep = (r: Run) =>
+    r.trace.series.map((v) => (log ? Math.log10(Math.max(1e-6, Math.min(1e8, v))) : v));
+  const sa = prep(a);
+  const sb = prep(b);
+  const all = [...sa, ...sb].filter(Number.isFinite);
+  if (all.length < 4) return null;
+  const lo = Math.min(...all, log ? Infinity : 0);
+  const hi = Math.max(...all);
+  const longest = Math.max(sa.length, sb.length);
+  const line = (xs: number[]) =>
+    xs
+      .map((v, i) => {
+        const x = (i / Math.max(1, longest - 1)) * W;
+        const y =
+          H - (((Number.isFinite(v) ? v : hi) - lo) / Math.max(1e-9, hi - lo)) * (H - 8) - 4;
+        return `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join("");
+  return (
+    <figure className="mt-5">
+      <figcaption className="label mb-2 flex items-center justify-between">
+        <span>
+          {a.trace.seriesLabel}
+          {log ? " · log scale" : ""} per step
+        </span>
+        <span className="flex items-center gap-2 normal-case tracking-normal">
+          <span className="h-0.5 w-4 bg-st-a" /> A
+          <span className="h-0.5 w-4 bg-st-b" /> B
+        </span>
+      </figcaption>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="h-[120px] w-full border border-rule bg-field"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label={`${a.trace.seriesLabel} over time: A takes ${sa.length} steps, B takes ${sb.length}.`}
+      >
+        <path
+          d={line(sa)}
+          fill="none"
+          stroke="rgb(var(--st-a))"
+          strokeWidth="1.75"
+          vectorEffect="non-scaling-stroke"
+        />
+        <path
+          d={line(sb)}
+          fill="none"
+          stroke="rgb(var(--st-b))"
+          strokeWidth="1.75"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+      <p className="readout mt-1 flex justify-between text-2xs text-ink-3">
+        <span>step 0</span>
+        <span>
+          A ends at {sa.length} · B ends at {sb.length}
+        </span>
+      </p>
+    </figure>
   );
 }
 
@@ -149,7 +240,7 @@ export function TagAB({ which, className }: { which: "a" | "b"; className?: stri
   return (
     <span
       className={cn(
-        "readout inline-flex h-5 w-5 items-center justify-center rounded-sm text-2xs font-semibold text-white",
+        "readout inline-flex h-5 w-5 items-center justify-center rounded-sm text-2xs font-semibold text-signal-on",
         which === "a" ? "bg-st-a" : "bg-st-b",
         className,
       )}

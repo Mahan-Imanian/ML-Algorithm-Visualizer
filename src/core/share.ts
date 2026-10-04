@@ -240,7 +240,7 @@ function variant(raw: unknown, family: string, model?: string): Experiment["a"] 
 
 function view(raw: unknown): ViewSettings {
   const v = isObj(raw) ? raw : {};
-  return { values: v.values === true, overlay: v.overlay === true };
+  return { values: v.values === true, overlay: v.overlay !== false };
 }
 
 export function fromPlain(raw: unknown): DecodeResult {

@@ -14,6 +14,7 @@ import {
 import type { GridParams } from "@/core/grid/algorithms";
 import { GRID_SIZES, type GridSize, type Heuristic } from "@/core/grid/model";
 import { makeGrid, TERRAINS } from "@/core/grid/terrain";
+import { components } from "@/core/graph/edit";
 import { GRAPH_MAX, GRAPH_MIN, makeGraph } from "@/core/graph/graph";
 import { algosOf, getAlgo, type AlgoId } from "@/core/info";
 import { makeRegression, REGRESSION_DATASETS, type GradientParams } from "@/core/learn/gradient";
@@ -35,7 +36,7 @@ import {
   SORT_PRESETS,
 } from "@/core/sort/input";
 import { cn } from "@/lib/utils";
-import { useLab, type Tool } from "@/store/lab";
+import { useLab, type GraphTool, type Tool } from "@/store/lab";
 import { Dice, Erase, StartPin, TargetPin, Trash, Wall, Weight } from "../icons";
 import {
   Button,
@@ -267,10 +268,7 @@ function ProblemSection({ exp }: { exp: Experiment }) {
                 ))}
               </Select>
             </Field>
-            <p className="text-xs text-ink-3">
-              Drag a node to move it; edge weights follow its distance. Click a node to make it the
-              root.
-            </p>
+            <GraphTools />
           </div>
         </Section>
       );
@@ -366,6 +364,37 @@ function ProblemSection({ exp }: { exp: Experiment }) {
         );
       }
   }
+}
+
+function GraphTools() {
+  const tool = useLab((s) => s.graphTool);
+  const setTool = useLab((s) => s.setGraphTool);
+  const exp = useLab((s) => s.exp);
+  const parts = exp.family === "graph" ? components(exp.input) : 1;
+  return (
+    <Field
+      label="Edit the graph"
+      hint="Edge weights are the distance between their nodes, so moving a node reweights its edges."
+    >
+      <Segmented<GraphTool>
+        label="Graph tool"
+        value={tool}
+        onChange={setTool}
+        className="w-full"
+        options={[
+          { value: "move", label: "Move", title: "Drag nodes; click a node to set the root" },
+          { value: "edge", label: "Edge", title: "Click two nodes to add or remove an edge" },
+          { value: "node", label: "Node", title: "Click empty space to add a node" },
+          { value: "delete", label: "Delete", title: "Click a node or edge to delete it" },
+        ]}
+      />
+      {parts > 1 && (
+        <p className="text-xs text-signal-ink">
+          The graph has {parts} disconnected parts, so the algorithms build a spanning forest.
+        </p>
+      )}
+    </Field>
+  );
 }
 
 function SortProblem({ exp, reseed }: { exp: SortExp; reseed: React.ReactNode }) {
@@ -784,8 +813,8 @@ function ViewSection({ exp }: { exp: Experiment }) {
         />
         {exp.b && (
           <Toggle
-            label="Overlay A and B"
-            hint="One grid: cells only A explored, only B, or both."
+            label="Overlay A and B on one grid"
+            hint="Shows which cells only A expanded, only B, or both. Turn off for side-by-side panes with each run's own frontier."
             checked={exp.view.overlay}
             onChange={(overlay) =>
               update((e) => ({ ...e, view: { ...e.view, overlay } }) as Experiment, {

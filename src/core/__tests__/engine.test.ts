@@ -14,6 +14,7 @@ import {
   type SearchAlgo,
   type TargetMode,
 } from "../search/search";
+import { addNode, components, hasEdge, removeNode, toggleEdge } from "../graph/edit";
 import { graphMachine, makeGraph, runGraph } from "../graph/graph";
 import { kmeansMachine, makeClusters, plusPlus, runKMeans } from "../learn/kmeans";
 import { bestFit, gradientMachine, lossAt, makeRegression, runGradient } from "../learn/gradient";
@@ -232,6 +233,35 @@ describe("spanning trees", () => {
       const t = runGraph(g, "kruskal");
       const s = new Player(graphMachine, g, t.events).at(t.events.length).state;
       expect(s.treeEdges).toBe(29);
+    }
+  });
+
+  it("edits graphs and reports a forest when the graph is disconnected", () => {
+    let g = makeGraph(8, 3);
+    const [a, b] = g.edges[0];
+    expect(hasEdge(g, b, a)).toBe(true);
+    g = toggleEdge(g, a, b);
+    expect(hasEdge(g, a, b)).toBe(false);
+    g = toggleEdge(g, a, b);
+    expect(hasEdge(g, a, b)).toBe(true);
+    expect(toggleEdge(g, a, a)).toBe(g);
+
+    const grown = addNode(g, { x: 2, y: -1 }, 2);
+    expect(grown.nodes).toHaveLength(9);
+    expect(grown.nodes[8]).toEqual({ x: 0.98, y: 0.02 });
+    expect(grown.edges.filter((e) => e[1] === 8)).toHaveLength(2);
+
+    const shrunk = removeNode(grown, 0);
+    expect(shrunk.nodes).toHaveLength(8);
+    expect(shrunk.edges.every(([x, y]) => x < 8 && y < 8 && x < y)).toBe(true);
+
+    const island = { ...g, edges: g.edges.filter((e) => e[0] !== 7 && e[1] !== 7) };
+    expect(components(island)).toBe(2);
+    for (const algo of ["prim", "kruskal"] as const) {
+      const t = runGraph(island, algo);
+      const s = new Player(graphMachine, island, t.events).at(t.events.length).state;
+      expect(s.treeEdges).toBeLessThan(7);
+      expect(t.checkpoints.map((c) => c.label)).toContain("Disconnected");
     }
   });
 });

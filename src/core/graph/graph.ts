@@ -194,10 +194,25 @@ export function runGraph(input: GraphInput, algo: GraphAlgo): Trace<GraphEvent> 
       tb.endGroup(total);
       if (count === Math.floor((n - 1) / 2)) tb.checkpoint("Half the tree");
     }
-    if (count === n - 1)
-      tb.emit({ k: "done", op: "done", note: `Tree complete with ${n - 1} edges` });
   }
-  tb.checkpoint("Spanning tree");
+  if (count === n - 1) {
+    tb.emit({
+      k: "done",
+      op: "done",
+      note: `Spanning tree complete: ${n - 1} edges, total weight ${total}`,
+    });
+    tb.checkpoint("Spanning tree");
+  } else {
+    tb.emit({
+      k: "done",
+      op: "done",
+      note:
+        algo === "prim"
+          ? `Heap empty with ${count + 1} of ${n} nodes in the tree: the rest are unreachable from the root`
+          : `Edges exhausted after ${count} of ${n - 1}: the graph is disconnected, so the result is a spanning forest`,
+    });
+    tb.checkpoint("Disconnected");
+  }
   return tb.finish(total);
 }
 

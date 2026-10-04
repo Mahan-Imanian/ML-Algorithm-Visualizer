@@ -3,6 +3,7 @@ import type { KMeansExp, Run } from "@/core/experiment";
 import { B_RANGE, bestFit, lossAt, M_RANGE } from "@/core/learn/gradient";
 import type { Point } from "@/core/learn/kmeans";
 import { useLab } from "@/store/lab";
+import { perf, timed } from "../perf";
 import { CLUSTER_COLORS } from "./colors";
 import { setupCanvas, useElementSize, usePalette, useReducedMotion, type Palette } from "../hooks";
 
@@ -206,7 +207,7 @@ export function KMeansView({
       axes(ctx, p, x0, y0, side, side, [0, 1], [0, 1], "x", "y");
       if (prog < 1) raf = requestAnimationFrame(draw);
     };
-    draw();
+    timed("k-means", draw);
     return () => cancelAnimationFrame(raf);
   }, [snap, size, p, run.input.points, manual, placed, cursor]);
 
@@ -280,6 +281,36 @@ export function GradientView({ run, cursor, label }: { run: GRun; cursor: number
     return { cols, rows, vals, lo, hi };
   }, [pts]);
 
+  const surfaceImg = useMemo(() => {
+    if (typeof document === "undefined") return null;
+    const off = document.createElement("canvas");
+    off.width = surface.cols;
+    off.height = surface.rows;
+    const octx = off.getContext("2d");
+    if (!octx) return null;
+    const img = octx.createImageData(surface.cols, surface.rows);
+    const channels = (name: string) =>
+      p
+        .rgb(name)
+        .replace(/^rgb\(|\s*\/.*$/g, "")
+        .trim()
+        .split(/\s+/)
+        .map(Number);
+    const ink = channels("ink");
+    const field = channels("field");
+    for (let i = 0; i < surface.vals.length; i++) {
+      const t = (surface.vals[i] - surface.lo) / Math.max(1e-9, surface.hi - surface.lo);
+      const band = Math.floor(t * 12) / 12;
+      const a = 0.04 + band * 0.42 + (Math.floor(t * 12) % 2 ? 0.03 : 0);
+      img.data[i * 4] = field[0] + (ink[0] - field[0]) * a;
+      img.data[i * 4 + 1] = field[1] + (ink[1] - field[1]) * a;
+      img.data[i * 4 + 2] = field[2] + (ink[2] - field[2]) * a;
+      img.data[i * 4 + 3] = 255;
+    }
+    octx.putImageData(img, 0, 0);
+    return off;
+  }, [surface, p]);
+
   const snap = useMemo(() => {
     const st = run.player.at(cursor).state;
     return {
@@ -294,6 +325,7 @@ export function GradientView({ run, cursor, label }: { run: GRun; cursor: number
   }, [cursor, run]);
 
   useEffect(() => {
+    const t0 = performance.now();
     const el = canvas.current;
     if (!el || size.w < 2) return;
     const ctx = setupCanvas(el, size.w, size.h);
@@ -358,34 +390,9 @@ export function GradientView({ run, cursor, label }: { run: GRun; cursor: number
       const y0 = oy + by;
       const w = side;
       const h = side;
-      const off = document.createElement("canvas");
-      off.width = surface.cols;
-      off.height = surface.rows;
-      const octx = off.getContext("2d");
-      if (octx) {
-        const img = octx.createImageData(surface.cols, surface.rows);
-        const ink = getComputedStyle(document.documentElement)
-          .getPropertyValue("--ink")
-          .trim()
-          .split(/\s+/)
-          .map(Number);
-        const field = getComputedStyle(document.documentElement)
-          .getPropertyValue("--field")
-          .trim()
-          .split(/\s+/)
-          .map(Number);
-        for (let i = 0; i < surface.vals.length; i++) {
-          const t = (surface.vals[i] - surface.lo) / Math.max(1e-9, surface.hi - surface.lo);
-          const band = Math.floor(t * 12) / 12;
-          const a = 0.04 + band * 0.42 + (Math.floor(t * 12) % 2 ? 0.03 : 0);
-          img.data[i * 4] = field[0] + (ink[0] - field[0]) * a;
-          img.data[i * 4 + 1] = field[1] + (ink[1] - field[1]) * a;
-          img.data[i * 4 + 2] = field[2] + (ink[2] - field[2]) * a;
-          img.data[i * 4 + 3] = 255;
-        }
-        octx.putImageData(img, 0, 0);
+      if (surfaceImg) {
         ctx.imageSmoothingEnabled = true;
-        ctx.drawImage(off, x0, y0, w, h);
+        ctx.drawImage(surfaceImg, x0, y0, w, h);
       }
       const MX = (m: number) => x0 + ((m - M_RANGE[0]) / (M_RANGE[1] - M_RANGE[0])) * w;
       const BY = (b: number) => y0 + ((B_RANGE[1] - b) / (B_RANGE[1] - B_RANGE[0])) * h;
@@ -495,7 +502,8 @@ export function GradientView({ run, cursor, label }: { run: GRun; cursor: number
       });
       ctx.stroke();
     }
-  }, [snap, size, p, pts, surface, opt, run.trace.series]);
+    perf.draw("gradient", performance.now() - t0);
+  }, [snap, size, p, pts, surfaceImg, opt, run.trace.series]);
 
   return (
     <div ref={ref} className="relative h-full w-full">

@@ -509,6 +509,7 @@ export const ALGOS: AlgoInfo[] = [
       L("if v is in tree: discard  # both ends inside", "reject", 1),
       L("add v and edge (u, v) to tree", "accept", 1),
       L("push every edge (v, x) with x outside the tree", "push", 1),
+      L("return tree  # spans only the root's component", "done"),
     ],
   },
   {
@@ -615,6 +616,147 @@ export const ALGOS: AlgoInfo[] = [
     ],
   },
 ];
+
+export interface AlgoDepth {
+  maintains: string;
+  assumes: string;
+  useWhen: string;
+  tradeoff: string;
+}
+
+export const DEPTH: Record<AlgoId, AlgoDepth> = {
+  bfs: {
+    maintains: "A FIFO queue of discovered cells, a discovered set, and a parent pointer per cell.",
+    assumes: "Every move costs the same. Weights on cells are ignored.",
+    useWhen:
+      "Shortest paths by edge count: unweighted grids, social-network hops, level-order traversal.",
+    tradeoff:
+      "Explores in every direction equally, so it visits far more cells than a guided search.",
+  },
+  dfs: {
+    maintains: "A LIFO stack of (cell, parent) pairs and a visited set.",
+    assumes: "Nothing about costs. Only reachability matters.",
+    useWhen:
+      "Reachability, cycle detection, topological order, maze generation, exhaustive search with backtracking.",
+    tradeoff: "Uses little memory on narrow graphs but returns an arbitrary, usually long, path.",
+  },
+  dijkstra: {
+    maintains:
+      "A min-heap keyed by tentative distance, a distance table, a settled set, and parents.",
+    assumes: "All edge costs are non-negative. A negative edge breaks the settle-once guarantee.",
+    useWhen:
+      "Single-source cheapest paths on weighted graphs: routing, network latency, game maps.",
+    tradeoff:
+      "Optimal but undirected: it settles every node closer than the target, in all directions.",
+  },
+  astar: {
+    maintains: "An open min-heap keyed by f = g + w·h, a closed set, g per node, and parents.",
+    assumes:
+      "With w = 1, h must never overestimate the remaining cost (admissible) for the path to be optimal.",
+    useWhen:
+      "Point-to-point search where a good distance estimate exists: game pathfinding, robotics, puzzles.",
+    tradeoff:
+      "Expands far fewer nodes than Dijkstra, but only as good as h. Raising w trades optimality for speed.",
+  },
+  greedy: {
+    maintains: "An open min-heap keyed by h alone and a seen set.",
+    assumes: "That looking close to the goal means being close to it.",
+    useWhen: "Quick, good-enough paths when optimality does not matter and obstacles are sparse.",
+    tradeoff:
+      "Fast on open ground, but concave obstacles trap it and its paths can be far from optimal.",
+  },
+  insertion: {
+    maintains: "A sorted prefix a[0..i-1] and the value currently being inserted.",
+    assumes: "Comparisons are cheap and the input may already be partly ordered.",
+    useWhen:
+      "Small arrays, nearly sorted data, and as the base case inside hybrid sorts like Timsort.",
+    tradeoff: "O(n) on sorted input, O(n²) on reversed input. Stable and in place.",
+  },
+  selection: {
+    maintains: "A sorted prefix and the index of the minimum seen in the current pass.",
+    assumes: "Writes are expensive relative to comparisons.",
+    useWhen: "When the number of swaps must be minimal: at most n − 1.",
+    tradeoff: "Always n(n−1)/2 comparisons regardless of input order, and not stable.",
+  },
+  bubble: {
+    maintains: "A sorted suffix and a swapped flag for early exit.",
+    assumes: "Nothing beyond comparable values.",
+    useWhen: "Teaching, and detecting that an array is already sorted in one pass.",
+    tradeoff:
+      "Simple and stable, but values travel one position per swap, so it is slow in practice.",
+  },
+  quick: {
+    maintains: "A recursion stack of (lo, hi) ranges, the pivot, and the partition boundary i.",
+    assumes: "The pivot splits ranges reasonably evenly. Bad pivots on sorted input give O(n²).",
+    useWhen:
+      "General-purpose in-memory sorting with good cache behaviour; the default in many libraries.",
+    tradeoff:
+      "Fast on average and in place, but not stable, with a quadratic worst case unless pivots are chosen well.",
+  },
+  merge: {
+    maintains: "A recursion stack of ranges and an auxiliary buffer for the merge.",
+    assumes: "O(n) extra memory is available.",
+    useWhen:
+      "When stability or a guaranteed O(n log n) matters: linked lists, external sorting, stable sorts of records.",
+    tradeoff:
+      "Predictable and stable, at the cost of a buffer and more data movement than quicksort.",
+  },
+  heap: {
+    maintains: "A max-heap in a[0..end) and a sorted suffix a[end..n).",
+    assumes: "Random access to the array.",
+    useWhen:
+      "When a guaranteed O(n log n) with O(1) extra space is required, for example in embedded systems.",
+    tradeoff: "No worst-case blowup and no buffer, but poor cache locality and not stable.",
+  },
+  linear: {
+    maintains: "A single index i.",
+    assumes: "Nothing. Works on unsorted data; on sorted data it can stop early.",
+    useWhen: "Small or unsorted arrays, or a single lookup where sorting first would cost more.",
+    tradeoff: "O(n) probes but no preprocessing.",
+  },
+  binary: {
+    maintains: "An interval [lo, hi] that must contain the target if it is present.",
+    assumes: "The array is sorted and supports random access.",
+    useWhen:
+      "Repeated lookups in sorted data, bisection on monotonic functions, lower/upper bound queries.",
+    tradeoff:
+      "O(log n) probes, but requires sorted input and is easy to get wrong at the boundaries.",
+  },
+  jump: {
+    maintains: "The current block boundary and the start of the previous block.",
+    assumes: "Sorted data where stepping forward is cheaper than jumping back.",
+    useWhen:
+      "Sorted sequences with expensive backward seeks, such as tapes or skip-like structures.",
+    tradeoff: "O(√n) probes: better than linear, worse than binary.",
+  },
+  prim: {
+    maintains: "The set of tree nodes and a min-heap of candidate edges leaving the tree.",
+    assumes: "A connected undirected graph. Otherwise it spans only the root's component.",
+    useWhen: "Dense graphs and when a tree must grow from a chosen starting point.",
+    tradeoff: "O(E log V) with a binary heap; one tree at a time.",
+  },
+  kruskal: {
+    maintains: "Edges sorted by weight and a union-find structure of fragments.",
+    assumes: "An undirected graph. Disconnected graphs yield a spanning forest.",
+    useWhen:
+      "Sparse graphs, and when edges arrive pre-sorted. Also the basis of single-linkage clustering.",
+    tradeoff: "O(E log E) dominated by the sort; builds many fragments that merge.",
+  },
+  kmeans: {
+    maintains: "k centroids and the assignment of every point to its nearest centroid.",
+    assumes: "Clusters are roughly spherical and similar in size; k is known in advance.",
+    useWhen:
+      "Fast partitioning of numeric data, colour quantisation, initial guesses for richer models.",
+    tradeoff: "Converges quickly to a local optimum that depends on the starting centroids.",
+  },
+  gradient: {
+    maintains: "The parameters (m, b), the gradient, and with momentum a velocity vector.",
+    assumes: "The loss is differentiable. Here it is convex, so there is one minimum.",
+    useWhen: "Fitting any differentiable model, from linear regression to neural networks.",
+    tradeoff:
+      "Simple and general, but the learning rate must suit the curvature of the loss surface.",
+  },
+};
 
 export function getAlgo(id: AlgoId): AlgoInfo {
   const a = ALGOS.find((x) => x.id === id);

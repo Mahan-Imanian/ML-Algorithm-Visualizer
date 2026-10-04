@@ -11,6 +11,7 @@ import type { AlgoId } from "@/core/info";
 import { nextGroupCursor, prevGroupCursor } from "@/core/trace";
 
 export type Tool = "wall" | "weight" | "erase" | "start" | "target";
+export type GraphTool = "move" | "edge" | "node" | "delete";
 export type Granularity = "step" | "op";
 
 export const SPEEDS = [0.25, 0.5, 1, 2, 4, 8] as const;
@@ -29,6 +30,9 @@ interface LabStore {
   editing: boolean;
   focusCell: number | null;
   revision: number;
+  bookmarks: number[];
+  graphTool: GraphTool;
+  edgeFrom: number | null;
 
   load(exp: Experiment, cursor?: number): void;
   update(fn: (exp: Experiment) => Experiment, opts?: { keepCursor?: boolean }): void;
@@ -55,6 +59,9 @@ interface LabStore {
   setTool(t: Tool): void;
   setWeight(w: number): void;
   setFocusCell(c: number | null): void;
+  toggleBookmark(): void;
+  setGraphTool(t: GraphTool): void;
+  setEdgeFrom(n: number | null): void;
 }
 
 function build(exp: Experiment) {
@@ -90,6 +97,9 @@ export const useLab = create<LabStore>((set, get) => ({
   editing: false,
   focusCell: null,
   revision: 0,
+  bookmarks: [],
+  graphTool: "move",
+  edgeFrom: null,
 
   load(exp, cursor = 0) {
     const runs = build(exp);
@@ -100,6 +110,8 @@ export const useLab = create<LabStore>((set, get) => ({
       cursorB: Math.min(cursor, lengthOf(runs.runB)),
       playing: false,
       editing: false,
+      bookmarks: [],
+      edgeFrom: null,
       revision: get().revision + 1,
     });
   },
@@ -114,6 +126,7 @@ export const useLab = create<LabStore>((set, get) => ({
       cursorA: keep ? Math.min(get().cursorA, lengthOf(runs.runA)) : 0,
       cursorB: keep ? Math.min(get().cursorB, lengthOf(runs.runB)) : 0,
       playing: false,
+      bookmarks: keep ? get().bookmarks : [],
       revision: get().revision + 1,
     });
   },
@@ -196,6 +209,7 @@ export const useLab = create<LabStore>((set, get) => ({
     const marks = [
       ...s.runA.trace.checkpoints.map((c) => c.at),
       ...(s.runB?.trace.checkpoints.map((c) => c.at) ?? []),
+      ...s.bookmarks,
       totalLength(s),
     ].sort((x, y) => x - y);
     const target =
@@ -244,6 +258,22 @@ export const useLab = create<LabStore>((set, get) => ({
   },
   setFocusCell(focusCell) {
     set({ focusCell });
+  },
+  toggleBookmark() {
+    const s = get();
+    const at = position(s);
+    const has = s.bookmarks.includes(at);
+    set({
+      bookmarks: has
+        ? s.bookmarks.filter((b) => b !== at)
+        : [...s.bookmarks, at].sort((x, y) => x - y),
+    });
+  },
+  setGraphTool(graphTool) {
+    set({ graphTool, edgeFrom: null });
+  },
+  setEdgeFrom(edgeFrom) {
+    set({ edgeFrom });
   },
 }));
 

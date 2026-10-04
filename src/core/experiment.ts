@@ -6,7 +6,7 @@ import {
   type GridParams,
 } from "./grid/algorithms";
 import { gridMachine, type GridState } from "./grid/machine";
-import { hasWeights, type GridInput, type GridSize, type Heuristic } from "./grid/model";
+import { fmtCell, hasWeights, type GridInput, type GridSize, type Heuristic } from "./grid/model";
 import { makeGrid } from "./grid/terrain";
 import {
   graphMachine,
@@ -64,7 +64,7 @@ export interface ViewSettings {
   overlay: boolean;
 }
 
-export const DEFAULT_VIEW: ViewSettings = { values: false, overlay: false };
+export const DEFAULT_VIEW: ViewSettings = { values: false, overlay: true };
 
 interface Variant<A extends AlgoId, P> {
   algo: A;
@@ -463,6 +463,22 @@ export function compareInsights(a: Run, b: Run, la: string, lb: string): string[
         `${fewer} expands ${pct(ea, eb)}% fewer cells (${Math.min(ea, eb)} vs ${Math.max(ea, eb)}).`,
       );
     } else out.push(`Both expand ${ea} cells.`);
+    const orderA = a.trace.events.flatMap((e) => (e.k === "pop" ? [e.cell] : []));
+    const orderB = b.trace.events.flatMap((e) => (e.k === "pop" ? [e.cell] : []));
+    let same = 0;
+    while (same < orderA.length && same < orderB.length && orderA[same] === orderB[same]) same++;
+    if (same === Math.min(orderA.length, orderB.length) && orderA.length === orderB.length)
+      out.push("Both expand the cells in exactly the same order.");
+    else if (same > 1)
+      out.push(
+        `They expand the same ${same} cells in the same order, then diverge at ${fmtCell(orderA[same] ?? orderB[same], a.input.w)}.`,
+      );
+    else out.push("Their expansion orders differ from the first step after the start.");
+    const setB = new Set(orderB);
+    const both = orderA.filter((c) => setB.has(c)).length;
+    out.push(
+      `Expanded by both: ${both}. Only ${la}: ${orderA.length - both}. Only ${lb}: ${orderB.length - both}.`,
+    );
     if (
       hasWeights(a.input) &&
       (a.algo === "bfs" || b.algo === "bfs" || a.algo === "dfs" || b.algo === "dfs")

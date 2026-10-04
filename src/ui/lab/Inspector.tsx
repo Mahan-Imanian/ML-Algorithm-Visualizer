@@ -4,6 +4,8 @@ import { variantLabel } from "@/core/experiment";
 import { getAlgo } from "@/core/info";
 import { cn } from "@/lib/utils";
 import { useLab } from "@/store/lab";
+import { usePresentedCursor } from "../clock";
+import { useCommitCounter } from "../perf";
 import { Segmented } from "../primitives";
 import { CodePanel } from "./Code";
 import { AboutPanel, ComparePanel, LogPanel, TagAB } from "./Panels";
@@ -38,7 +40,6 @@ function WhichToggle({ which, set }: { which: "a" | "b"; set: (w: "a" | "b") => 
                 {variantLabel(exp.a)}
               </span>
             ),
-            title: "Run A",
           },
           {
             value: "b",
@@ -48,7 +49,6 @@ function WhichToggle({ which, set }: { which: "a" | "b"; set: (w: "a" | "b") => 
                 {exp.b ? variantLabel(exp.b) : ""}
               </span>
             ),
-            title: "Run B",
           },
         ]}
       />
@@ -57,9 +57,10 @@ function WhichToggle({ which, set }: { which: "a" | "b"; set: (w: "a" | "b") => 
 }
 
 export function InspectView() {
+  useCommitCounter("inspector");
   const [which, setWhich, hasB] = useWhich();
   const run = useLab((s) => (which === "b" && s.runB ? s.runB : s.runA));
-  const cursor = useLab((s) => (which === "b" ? s.cursorB : s.cursorA));
+  const cursor = usePresentedCursor(which);
   const [codeOpen, setCodeOpen] = useState(true);
   return (
     <div>
@@ -70,7 +71,7 @@ export function InspectView() {
           aria-expanded={codeOpen}
           onClick={() => setCodeOpen((o) => !o)}
         >
-          <h3 className="label">Pseudocode · {getAlgo(run.algo).short}</h3>
+          <h2 className="label">Pseudocode · {getAlgo(run.algo).short}</h2>
           <span className="text-2xs text-ink-3">{codeOpen ? "hide" : "show"}</span>
         </button>
         {codeOpen && (
@@ -89,7 +90,7 @@ export function InspectView() {
 function LogView() {
   const [which, setWhich, hasB] = useWhich();
   const run = useLab((s) => (which === "b" && s.runB ? s.runB : s.runA));
-  const cursor = useLab((s) => (which === "b" ? s.cursorB : s.cursorA));
+  const cursor = usePresentedCursor(which);
   return (
     <div>
       {hasB && <WhichToggle which={which} set={setWhich} />}

@@ -55,7 +55,7 @@ function Block({
   return (
     <div className="border-t border-rule px-4 py-3 first:border-t-0">
       <div className="mb-2 flex items-baseline justify-between gap-2">
-        <h4 className="label">{title}</h4>
+        <h3 className="label">{title}</h3>
         {meta && <span className="readout text-2xs text-ink-3">{meta}</span>}
       </div>
       {children}
@@ -80,6 +80,9 @@ export function StatePanel({ run, cursor }: { run: Run; cursor: number }) {
   }
 }
 
+const ROWS = 12;
+const ROW_H = 22;
+
 function GridState({ run, cursor }: { run: Extract<Run, { family: "grid" }>; cursor: number }) {
   const s = run.player.at(cursor).state;
   const kind = frontierKind(run.algo);
@@ -98,7 +101,7 @@ function GridState({ run, cursor }: { run: Extract<Run, { family: "grid" }>; cur
             : "Open set · by f = g + h";
   const showH = run.algo === "astar" || run.algo === "greedy";
   const pushed = new Set(s.pushedNow);
-  const shown = list.slice(0, 12);
+  const shown = list.slice(0, ROWS);
   return (
     <div>
       <Block title="Now">
@@ -117,56 +120,57 @@ function GridState({ run, cursor }: { run: Extract<Run, { family: "grid" }>; cur
         />
       </Block>
       <Block title={title} meta={`${list.length} waiting`}>
-        {list.length === 0 ? (
-          <p className="text-sm text-ink-3">
-            {cursor === 0 ? "Empty until the search starts." : "Empty."}
-          </p>
-        ) : (
-          <table className="w-full table-fixed text-sm">
-            <thead>
-              <tr className="text-left text-2xs text-ink-3">
-                <th className="w-6 pb-1 font-normal">#</th>
-                <th className="pb-1 font-normal">cell</th>
-                <th className="w-14 pb-1 text-right font-normal">
-                  {run.algo === "bfs" || run.algo === "dfs" ? "moves" : "g"}
-                </th>
-                {showH && <th className="w-12 pb-1 text-right font-normal">h</th>}
-                {kind === "pq" && (
-                  <th className="w-14 pb-1 text-right font-normal">
-                    {run.algo === "dijkstra" ? "key" : run.algo === "greedy" ? "key" : "f"}
-                  </th>
+        <div className="readout grid grid-cols-[24px_minmax(0,1fr)_56px_48px_56px] text-2xs text-ink-3">
+          <span>#</span>
+          <span>cell</span>
+          <span className="text-right">
+            {run.algo === "bfs" || run.algo === "dfs" ? "moves" : "g"}
+          </span>
+          <span className="text-right">{showH ? "h" : ""}</span>
+          <span className="pr-1 text-right">
+            {kind === "pq" ? (run.algo === "astar" ? "f" : "key") : ""}
+          </span>
+        </div>
+        <div
+          className="relative mt-1 overflow-hidden"
+          style={{ height: ROWS * ROW_H }}
+          role={shown.length ? "list" : undefined}
+          aria-label={shown.length ? `${title}, ${list.length} entries` : undefined}
+        >
+          {list.length === 0 && (
+            <p className="absolute inset-x-0 top-0 text-sm text-ink-3">
+              {cursor === 0 ? "Empty until the search starts." : "Empty."}
+            </p>
+          )}
+          {shown.map((e, i) => {
+            const stale = kind === "pq" && (s.status[e.cell] === 2 || e.g > s.g[e.cell]);
+            const fresh = pushed.has(e.cell) && !stale;
+            return (
+              <div
+                key={e.seq}
+                role="listitem"
+                className={cn(
+                  "readout absolute inset-x-0 top-0 grid h-[22px] cursor-default grid-cols-[24px_minmax(0,1fr)_56px_48px_56px] items-center text-sm transition-transform duration-med ease-out",
+                  i === 0 && "bg-sunken",
+                  stale && "text-ink-3 line-through",
+                  fresh && "animate-entry-in text-signal-ink",
                 )}
-              </tr>
-            </thead>
-            <tbody className="readout">
-              {shown.map((e, i) => {
-                const stale = kind === "pq" && (s.status[e.cell] === 2 || e.g > s.g[e.cell]);
-                return (
-                  <tr
-                    key={i}
-                    className={cn(
-                      "cursor-default",
-                      i === 0 && "bg-sunken",
-                      stale && "text-ink-3 line-through",
-                      pushed.has(e.cell) && !stale && "text-signal-ink",
-                    )}
-                    onMouseEnter={() => setFocus(e.cell)}
-                    onMouseLeave={() => setFocus(null)}
-                  >
-                    <td className="py-0.5 pl-1 text-ink-3">{i === 0 ? "→" : i + 1}</td>
-                    <td className="py-0.5">{fmtCell(e.cell, w)}</td>
-                    <td className="py-0.5 text-right">{e.g}</td>
-                    {showH && <td className="py-0.5 text-right">{e.h}</td>}
-                    {kind === "pq" && <td className="py-0.5 pr-1 text-right">{e.pri}</td>}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-        {list.length > shown.length && (
-          <p className="mt-1 text-xs text-ink-3">+ {list.length - shown.length} more</p>
-        )}
+                style={{ transform: `translateY(${i * ROW_H}px)` }}
+                onMouseEnter={() => setFocus(e.cell)}
+                onMouseLeave={() => setFocus(null)}
+              >
+                <span className="pl-1 text-ink-3">{i === 0 ? "→" : i + 1}</span>
+                <span>{fmtCell(e.cell, w)}</span>
+                <span className="text-right">{e.g}</span>
+                <span className="text-right">{showH ? e.h : ""}</span>
+                <span className="pr-1 text-right">{kind === "pq" ? e.pri : ""}</span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-1 h-4 text-xs text-ink-3">
+          {list.length > shown.length ? `+ ${list.length - shown.length} more` : ""}
+        </p>
         {kind === "pq" && (
           <p className="mt-2 text-xs text-ink-3">
             Struck-through rows are stale duplicates left behind by a cheaper route.

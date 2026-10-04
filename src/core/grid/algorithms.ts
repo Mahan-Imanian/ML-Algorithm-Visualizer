@@ -115,7 +115,7 @@ export function runGrid(
     tb.emit({
       k: "found",
       op,
-      note: `Target reached: ${path.length - 1} moves, cost ${round2(cost)}`,
+      note: `Target reached. The reconstructed path has ${path.length - 1} edges and costs ${round2(cost)}`,
       path,
       cost: round2(cost),
     });
@@ -283,7 +283,11 @@ export function runGrid(
     }
   }
 
-  tb.emit({ k: "nopath", op: "nopath", note: "Frontier exhausted: the target is unreachable" });
+  tb.emit({
+    k: "nopath",
+    op: "nopath",
+    note: "Frontier empty and the target never reached: no route exists",
+  });
   tb.checkpoint("No path");
   return tb.finish(size);
 }

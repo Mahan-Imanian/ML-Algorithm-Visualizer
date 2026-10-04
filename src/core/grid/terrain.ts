@@ -7,17 +7,17 @@ export const TERRAINS: { id: Exclude<Terrain, "custom">; label: string; hint: st
   { id: "rooms", label: "Rooms", hint: "Recursive division: chambers joined by single doors." },
   {
     id: "scatter",
-    label: "Scattered walls",
+    label: "Scatter",
     hint: "Random obstacles at 30% density, always solvable.",
   },
   {
     id: "weighted",
-    label: "Weighted terrain",
+    label: "Mud field",
     hint: "Mud and swamp cost more. BFS ignores it; Dijkstra does not.",
   },
   {
     id: "trap",
-    label: "Heuristic trap",
+    label: "Trap",
     hint: "A cup facing the start. Greedy search walks straight in.",
   },
 ];

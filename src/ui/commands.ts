@@ -7,15 +7,16 @@ import type { GridExp } from "@/core/experiment";
 import { toFile } from "@/core/share";
 import { downloadText } from "@/lib/utils";
 import { navigate, parseHash } from "@/lib/router";
-import { useLab, type Tool } from "@/store/lab";
+import { useLab, type GraphTool, type Tool } from "@/store/lab";
 import { useSettings } from "@/store/settings";
 import { useUI } from "@/store/ui";
 import { regenerate } from "./lab/variants";
+import { enterPresentation, exitPresentation } from "./presentation";
 
 export interface Command {
   id: string;
   label: string;
-  group: "Playback" | "Experiment" | "Algorithms" | "Experiments" | "Go to" | "View";
+  group: "Playback" | "This experiment" | "Algorithms" | "Experiments" | "Go to" | "View";
   keywords?: string;
   keys?: string;
   run(): void;
@@ -148,7 +149,7 @@ export function buildCommands(): Command[] {
       {
         id: "random",
         label: "New random input",
-        group: "Experiment",
+        group: "This experiment",
         keys: "N",
         keywords: "randomize shuffle seed regenerate",
         run: () => lab().update((e) => regenerate(e, randomSeed())),
@@ -156,7 +157,7 @@ export function buildCommands(): Command[] {
       {
         id: "save",
         label: "Save experiment",
-        group: "Experiment",
+        group: "This experiment",
         keys: "⌘S",
         keywords: "bookmark keep library",
         run: () => useUI.getState().open("save"),
@@ -164,14 +165,14 @@ export function buildCommands(): Command[] {
       {
         id: "share",
         label: "Share link",
-        group: "Experiment",
+        group: "This experiment",
         keywords: "copy url send",
         run: () => useUI.getState().open("share"),
       },
       {
         id: "export",
         label: "Export as JSON file",
-        group: "Experiment",
+        group: "This experiment",
         keywords: "download file",
         run: exportExperiment,
       },
@@ -182,7 +183,7 @@ export function buildCommands(): Command[] {
         cmds.push({
           id: `terrain-${t.id}`,
           label: t.id === "maze" ? "Generate maze" : `Terrain: ${t.label}`,
-          group: "Experiment",
+          group: "This experiment",
           keys: t.id === "maze" ? "M" : undefined,
           keywords: `grid map ${t.id} ${t.hint}`,
           run: () =>
@@ -202,7 +203,7 @@ export function buildCommands(): Command[] {
         cmds.push({
           id: `tool-${t}`,
           label,
-          group: "Experiment",
+          group: "This experiment",
           keys: key,
           keywords: "draw paint brush",
           run: () => lab().setTool(t),
@@ -212,7 +213,7 @@ export function buildCommands(): Command[] {
       cmds.push({
         id: "uncompare",
         label: "Stop comparing",
-        group: "Experiment",
+        group: "This experiment",
         keys: "C",
         keywords: "single remove b",
         run: () => lab().setVariantB(null),
@@ -226,7 +227,7 @@ export function buildCommands(): Command[] {
       cmds.push({
         id: `cmp-${a.id}`,
         label: `Compare with ${a.name}`,
-        group: "Experiment",
+        group: "This experiment",
         keywords: `versus vs side by side ${a.aliases.join(" ")}`,
         run: () =>
           lab().setVariantB({
@@ -235,13 +236,55 @@ export function buildCommands(): Command[] {
           } as AnyVariant),
       });
     }
-    cmds.push({
-      id: "setup",
-      label: "Open setup",
-      group: "View",
-      keywords: "configure input settings panel",
-      run: () => useUI.getState().setSetupOpen(true),
-    });
+    cmds.push(
+      {
+        id: "setup",
+        label: "Open setup",
+        group: "View",
+        keywords: "configure input settings panel",
+        run: () => useUI.getState().setSetupOpen(true),
+      },
+      {
+        id: "present",
+        label: useUI.getState().present ? "Exit presentation" : "Present full screen",
+        group: "View",
+        keys: "P",
+        keywords: "presentation mode slides fullscreen demo projector talk lecture",
+        run: () => (useUI.getState().present ? exitPresentation() : enterPresentation()),
+      },
+      {
+        id: "hud",
+        label: "Frame monitor",
+        group: "View",
+        keys: "H",
+        keywords: "performance fps frame time profiler hud refresh 120hz 144hz",
+        run: () => useUI.getState().setHud(!useUI.getState().hud),
+      },
+      {
+        id: "bookmark",
+        label: "Bookmark this step",
+        group: "Playback",
+        keys: "B",
+        keywords: "mark remember checkpoint pin",
+        run: () => lab().toggleBookmark(),
+      },
+    );
+    if (s.exp.family === "graph") {
+      const tools: [GraphTool, string][] = [
+        ["move", "Graph tool: move nodes"],
+        ["edge", "Graph tool: add or remove edges"],
+        ["node", "Graph tool: add nodes"],
+        ["delete", "Graph tool: delete"],
+      ];
+      for (const [t, label] of tools)
+        cmds.push({
+          id: `gtool-${t}`,
+          label,
+          group: "This experiment",
+          keywords: "graph editor edit connect link vertex",
+          run: () => lab().setGraphTool(t),
+        });
+    }
   }
   for (const a of ALGOS) {
     cmds.push({
@@ -343,6 +386,13 @@ export function scoreCommand(c: Command, query: string): number {
   const hay = `${label} ${norm(c.keywords ?? "")} ${c.group.toLowerCase()}`;
   const raw = query.trim().toLowerCase();
   if (c.label.toLowerCase() === raw) return 100;
+  if (
+    c.group === "Algorithms" &&
+    norm(c.keywords ?? "")
+      .split(/\s+/)
+      .includes(q)
+  )
+    return 90;
   if (c.label.toLowerCase().startsWith(raw)) return 80;
   let score = 0;
   for (const tok of q.split(/\s+/)) {

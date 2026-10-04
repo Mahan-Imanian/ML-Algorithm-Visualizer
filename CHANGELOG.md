@@ -1,5 +1,31 @@
 # Changelog
 
+## 3.1.0
+
+Stability, smoothness and presentation. See [docs/AUDIT.md](docs/AUDIT.md#310-follow-up-audit) for the measurements.
+
+### Fixed
+
+- **The visualization no longer moves when text changes.** In 3.0.0 the caption and the pane header could wrap, which resized the stage and made the canvas re-centre on every step: three different canvas sizes during one BFS run and fourteen during a comparison. The stage now sits in fixed grid tracks with `contain: strict`, and captions, headers and counters have fixed sizes. Across about 150 frames for each algorithm, every canvas keeps exactly one size.
+- **Large comparisons no longer stutter.** p95 frame time on the largest weighted comparison fell from 233 ms to 17 ms. Canvases draw in `requestAnimationFrame` from the live cursor; text panels update at most 20 times a second during playback.
+- A run switched from the palette could hand the code panel a cursor from the previous run and crash it.
+- Typing `BFS` in the palette ranked the "BFS floods a maze" experiment above breadth-first search itself. Arrow-key order now matches the grouped order on screen.
+- Sorting and gradient runs ended on a leftover sub-step ("First value is in place"). They now end with a summary of the run.
+- Pointer labels in sorting and searching overlapped when two pointers sat on neighbouring bars.
+- Dark-theme maze walls were brighter than the search itself.
+- Phones lost the B tag in the comparison header, and the stage left empty space around wide grids.
+- Accessibility: the orange actions fell below 4.5:1 contrast, empty lists were exposed as lists, headings skipped levels, the page had no main landmark, and four buttons had accessible names that didn't contain their visible text.
+
+### Added
+
+- **Presentation mode** (`P`): full screen, large type, toggleable code, state, explanation and metrics (`C`, `S`, `E`, `M`).
+- **Motion that shows cause:** cells grow in when discovered, the edge to each queued neighbour draws in, the expanded cell crossfades, the path traces back from the target, bars travel to their new positions, and frontier rows slide as the queue changes. Motion is time-based, so it behaves the same at any refresh rate.
+- **Graph editor:** connect, disconnect, add and delete nodes. Disconnected graphs produce a spanning forest and say so.
+- **Bookmarks** (`B`) on the timeline, used as milestones by `[` and `]`.
+- **Comparison:** grids overlay by default, the verdict names the cell where the two expansion orders diverge, and a chart plots both runs' progress.
+- **Depth notes** for every algorithm: the state it keeps, guarantees, common mistakes, when to use it.
+- **Frame monitor** (`H`): rAF frame times, dropped frames, per-surface draw time and per-component commit rate.
+
 ## 3.0.0
 
 A rebuild of the product around what the October 2026 audit found. See [docs/AUDIT.md](docs/AUDIT.md) for each finding and how it was resolved.

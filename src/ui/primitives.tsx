@@ -15,7 +15,7 @@ const buttonStyles = cva(
     variants: {
       variant: {
         primary: "bg-ink text-surface hover:bg-ink/85",
-        signal: "bg-signal text-white hover:bg-signal/90",
+        signal: "bg-signal text-signal-on hover:bg-signal/90",
         outline: "border border-rule-strong bg-surface text-ink hover:bg-sunken",
         ghost: "text-ink-2 hover:bg-sunken hover:text-ink",
         quiet: "text-ink-2 hover:text-ink",
@@ -403,7 +403,7 @@ export function Section({
   return (
     <section className={cn("border-b border-rule px-4 py-4", className)}>
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="label">{title}</h3>
+        <h2 className="label">{title}</h2>
         {aside}
       </div>
       {children}

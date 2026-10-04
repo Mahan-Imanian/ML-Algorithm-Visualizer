@@ -1,8 +1,66 @@
 # Audit and resolution
 
-This document tracks every finding from the October 2026 audit of version 2.0.0 and how version 3.0.0 resolves it. A finding is marked **fixed** only after the original failure was reproduced and the corrected behaviour verified, in the running app or by a test that fails on the old behaviour.
+This document tracks every finding from the October 2026 audit of version 2.0.0 and how version 3.0.0 resolves it. A follow-up audit of 3.0.0 and its resolution in 3.1.0 comes first. A finding is marked **fixed** only after the original failure was reproduced and the corrected behaviour verified, in the running app or by a test that fails on the old behaviour.
 
-## Status of every finding
+## 3.1.0 follow-up audit
+
+### What was still wrong in 3.0.0
+
+1. **The visualization moved when text changed.** The caption lived inside the stage's flex column and grew from 60 to 98 px as explanations wrapped. Pane-header metrics wrapped too. Each change resized the stage, fired the ResizeObserver, resized the canvas and re-centred the grid. Measured on the live 3.0.0 build, one BFS run produced 3 distinct canvas boxes, and a comparison produced 14 with the caption ranging from 118 to 194 px.
+2. **Rendering was tied to React.** Every cursor change re-rendered the stage tree. On the largest weighted comparison at 8×, p95 frame time was 233 ms.
+3. **Motion showed state, not cause.** Cells snapped between colours; nothing connected a dequeued cell to the neighbours it enqueued.
+4. **There was no way to present.** The lab chrome took more room than the visualization on a projector.
+5. **Graph editing was limited to moving nodes**, and a disconnected graph gave a silent, wrong-looking "tree".
+6. **Smaller defects:** a crash when switching runs from the palette, palette ranking (`BFS` found an experiment before the algorithm), end-of-run captions stopping on a sub-step, overlapping pointer labels, dark walls brighter than the search, and five accessibility failures Lighthouse could see (contrast 4.06:1 on the main action, empty list roles, heading order, no main landmark, name/label mismatches).
+
+### How 3.1.0 resolves it
+
+| Finding            | Fix                                                                                                                                                                                                  | Evidence                                                                                                                                                                                                                                   |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Layout instability | Stage in fixed grid tracks (`minmax(0,1fr) 104px 28px 88px`) with `contain: strict`; fixed-height, clamped captions; single-line headers with fixed-width tabular readouts; stable scrollbar gutters | Canvas box sampled every frame for about 150 frames during playback: exactly 1 box per canvas for BFS, DFS, Dijkstra, A\*, greedy, all six sorts, three searches, Prim, Kruskal, k-means, gradient and compare. Caption constant at 104 px |
+| Smoothness         | Two clocks: canvases draw from the live cursor in rAF; panels follow a presented cursor throttled to 20 Hz during playback; time-based easing                                                        | Largest weighted comparison, Log open, 480 steps/s: median 16.7 ms, p95 17.0 ms, worst 17.2 ms, 0 % dropped, grid draw 0.54 ms average and 1.40 ms max                                                                                     |
+| Motion             | Discovery grows from the centre, enqueue edges draw in, expansion crossfades, the path traces back from the target, bars and pointers travel, frontier rows slide                                    | Visual QA of rendered frames                                                                                                                                                                                                               |
+| Presentation       | Full-screen mode with large type and toggleable panels                                                                                                                                               | Screenshot at 1920×1080; test for `P`, `C`, `Escape`                                                                                                                                                                                       |
+| Graph editing      | Connect, disconnect, add and delete nodes; forest detection                                                                                                                                          | Engine test: edits, re-indexing, 2 components, "Disconnected" milestone                                                                                                                                                                    |
+| Palette            | Exact alias match on an algorithm outranks a prefix match on anything else; navigation follows visual order                                                                                          | Test against the real command list: `BFS`, `bfs`, `Bfs`, `breadth`, `A*`, `astar`, …; UI test types `BFS` and presses Enter                                                                                                                |
+| Accessibility      | Contrast token for text on orange, roles, headings, landmark, names                                                                                                                                  | Lighthouse accessibility 91 → 100 on the Lab (light and dark, desktop and phone) and on Explore                                                                                                                                            |
+
+Not verified: 120 and 144 Hz on real hardware (the test display is 60 Hz, so high refresh rates are covered only by per-frame work against the 8.3 and 6.9 ms budgets), and a real screen-reader session.
+
+### Scorecard, 25 dimensions
+
+| Dimension                  | 2.0.0   | 3.0.0   | 3.1.0   | What would raise it                                     |
+| -------------------------- | ------- | ------- | ------- | ------------------------------------------------------- |
+| Product concept            | 4       | 8       | 8       | Validation with students and teachers                   |
+| Differentiation            | 2       | 7.5     | 8       | A data-structures family                                |
+| Feature depth              | 2       | 7.5     | 8       | Bellman-Ford, topological sort, BST and heap operations |
+| UX                         | 3       | 7.5     | 8       | A usability study                                       |
+| UI hierarchy               | 4       | 7.5     | 8.5     |                                                         |
+| Visual identity            | 2       | 7.5     | 8       |                                                         |
+| Design system              | 4       | 8       | 8       | Published component documentation                       |
+| Interaction design         | 3       | 7.5     | 8       |                                                         |
+| Motion                     | 3       | 6       | 8       | Transitions between families                            |
+| Layout stability           | 3       | 4       | 9.5     |                                                         |
+| Rendering smoothness       | 4       | 5       | 9       | Confirmation on 120 and 144 Hz displays                 |
+| Performance                | 6       | 7       | 9       |                                                         |
+| Accessibility              | 2       | 7       | 8.5     | A screen-reader session                                 |
+| Responsive                 | 1       | 8       | 8.5     |                                                         |
+| Presentation readiness     | 1       | 4       | 8.5     | Speaker notes, a remote-friendly key map                |
+| Comparison                 | 1       | 7.5     | 8.5     |                                                         |
+| Educational content        | 3       | 7.5     | 8       | Exercises with checked answers                          |
+| Copy                       | 3       | 8       | 8.5     |                                                         |
+| Search and command palette | 1       | 7       | 9       |                                                         |
+| Code quality               | 5       | 8       | 8.5     |                                                         |
+| Architecture               | 6       | 8.5     | 9       |                                                         |
+| Testing and reliability    | 3       | 8       | 8.5     | Browser end-to-end tests in CI                          |
+| Security                   | 8       | 8.5     | 8.5     |                                                         |
+| Documentation              | 4       | 8       | 9       |                                                         |
+| Overall polish             | 3       | 7       | 8.5     |                                                         |
+| **Average**                | **3.2** | **7.2** | **8.5** |                                                         |
+
+The 3.0.0 column is re-scored here with what the follow-up audit found: the layout instability and the 233 ms p95 lowered stability, smoothness, motion and polish below the figures given at release.
+
+## Status of every finding (2.0.0 → 3.0.0)
 
 | #   | Finding (2.0.0)                                                                                                      | Status           | Evidence                                                                                                                                                                                                                                                                |
 | --- | -------------------------------------------------------------------------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
