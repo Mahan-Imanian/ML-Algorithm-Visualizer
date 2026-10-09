@@ -1,25 +1,69 @@
-# Algoscope
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/cover-dark.png">
+  <img alt="Algoscope: an algorithm lab that records every step and plays it back next to the data structure. 18 algorithms, 5 families, side-by-side compare, MIT." src=".github/assets/cover-light.png" width="100%">
+</picture>
 
-An algorithm lab that records every step and plays it back next to the data structure.
+<p align="center">
+  <a href="https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer/actions/workflows/ci.yml"><img alt="CI status" src="https://img.shields.io/github/actions/workflow/status/Mahan-Imanian/ML-Algorithm-Visualizer/ci.yml?branch=main&style=flat-square&label=CI"></a>
+  <a href="https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer/actions/workflows/deploy.yml"><img alt="Deploy status" src="https://img.shields.io/github/actions/workflow/status/Mahan-Imanian/ML-Algorithm-Visualizer/deploy.yml?branch=main&style=flat-square&label=deploy"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-3d7bfd?style=flat-square"></a>
+  <a href="https://mahan-imanian.github.io/ML-Algorithm-Visualizer/"><img alt="Open the live demo" src="https://img.shields.io/badge/live_demo-open-ff6a3d?style=flat-square"></a>
+</p>
 
-[![CI](https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer/actions/workflows/ci.yml/badge.svg)](https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer/actions/workflows/ci.yml) [![Deploy](https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer/actions/workflows/deploy.yml/badge.svg)](https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer/actions/workflows/deploy.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Live demo](https://img.shields.io/badge/demo-live-orange)](https://mahan-imanian.github.io/ML-Algorithm-Visualizer/)
+<p align="center">
+  <a href="https://mahan-imanian.github.io/ML-Algorithm-Visualizer/"><b>Open the lab</b></a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#what-you-can-do">Features</a> ·
+  <a href="#algorithms">Algorithms</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="docs/internals.md">Internals</a>
+</p>
 
-[![Playback of A* against Dijkstra on one weighted grid: the overlay, the min-heap and the caption move together](docs/screenshots/compare.gif)](https://mahan-imanian.github.io/ML-Algorithm-Visualizer/)
+<br>
 
-## Key capabilities
+<a href="https://mahan-imanian.github.io/ML-Algorithm-Visualizer/"><img alt="Algoscope comparing Dijkstra and A* on one weighted grid, with Dijkstra's min-heap and the synced pseudocode beside it" src=".github/assets/showcase.png" width="100%"></a>
 
-- **Step through 18 algorithms** in five families, forwards or backwards, one logical step or one operation at a time.
-- **Watch the structure the algorithm decides from:** BFS queue, DFS stack, Dijkstra's min-heap with stale entries, A\*'s open set with g, h and f, quicksort's call stack, Kruskal's union-find fragments.
-- **Read why each step happens.** The caption uses real values, for example "A cheaper route to (9, 8) through (10, 8): dist 7 → 6", and the pseudocode line moves with it.
-- **Compare two runs on identical input**, two algorithms or two settings of one. The Compare panel states the difference (for example "A\* expands 55% fewer cells") and points to the first cell where the expansion orders diverge.
-- **Start from 14 prepared experiments**, such as _Why does greedy search walk into the trap?_, or edit the grid, graph, array or dataset yourself.
-- **Share an experiment as a link.** Input, seed, settings and optionally the current step live in the URL. Press `P` for a full-screen presentation mode.
+Most visualizers animate the result of an algorithm and stop there. That hides the part people actually get wrong: why _this_ cell, _this_ pivot or _this_ edge comes next. Algoscope treats a run as a recording. The structure the algorithm decides from stays on screen at every step, every step is explained with real values, and two algorithms can run side by side on identical input so the difference is measured instead of guessed.
+
+## What you can do
+
+### Compare two algorithms on the same input
+
+Run two algorithms, or two settings of one, on the same grid. The overlay shows both expansions at once, and the Compare panel gives the verdict in plain numbers ("both find a path of cost 46; A\* expands 55% fewer cells") and points to the first cell where the two orders diverge.
+
+<img alt="Playback of A* against Dijkstra: the overlay, the min-heap and the caption move together" src="docs/screenshots/compare.gif" width="100%">
+
+### See the structure the algorithm is deciding from
+
+The BFS queue, DFS stack, Dijkstra's min-heap (stale entries included), A\*'s open set with g, h and f, quicksort's call stack, merge sort's buffer and Kruskal's union-find fragments are always visible. Each step's caption uses real values, for example "a cheaper route to (9, 8) through (10, 8): dist 7 → 6", and the pseudocode line moves with it.
+
+<p align="center">
+  <img alt="Quicksort mid-partition with pointers, the active range and the call stack" src=".github/assets/f-quicksort.png" width="49%">
+  <img alt="Kruskal rejecting an edge that would close a cycle, with union-find fragments" src=".github/assets/f-kruskal.png" width="49%">
+</p>
+
+### Start from a question, not an algorithm
+
+Explore opens with 14 prepared experiments such as _Why does greedy search walk into the trap?_ or _Can insertion sort beat merge sort?_ The input is already built and the run already recorded, so nothing starts empty. Change one thing (a wall, the pivot rule, the heuristic, the learning rate) and it records again instantly.
+
+<p align="center">
+  <img alt="The Explore page listing prepared experiments by question" src=".github/assets/f-explore.png" width="49%">
+  <img alt="k-means after convergence, with Voronoi regions and inertia" src=".github/assets/f-kmeans.png" width="49%">
+</p>
+
+### Teach with it, share it
+
+Press <kbd>P</kbd> for presentation mode: full screen, large type, and toggles for code, state, explanation and metrics. Every experiment is a link: input, seed, settings and optionally the current step are encoded in the URL, and JSON export uses the same format.
+
+<img alt="Presentation mode on a 1920 by 1080 screen: BFS in a maze with the live queue" src=".github/assets/f-present.png" width="100%">
 
 ## Quick start
 
 Open the [hosted lab](https://mahan-imanian.github.io/ML-Algorithm-Visualizer/), or run it locally with Node 20 or newer:
 
 ```bash
+git clone https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer.git
+cd ML-Algorithm-Visualizer
 npm install
 npm run dev
 ```
@@ -37,10 +81,6 @@ Then open http://localhost:5173/ML-Algorithm-Visualizer/.
 | Learning       | k-means (k-means++, random, deliberately bad or hand-placed centroids), gradient descent on linear regression (learning rate, momentum, start)           | Voronoi regions and inertia; loss surface, descent path, gradient     |
 
 Each algorithm has an About panel with complexity, guarantees, the state it keeps, common mistakes and when to use it. Despite the repository name, only the last two are machine learning.
-
-| Quicksort, mid-partition                                                  | Kruskal, rejecting a cycle                                                         | k-means, converged                                                        |
-| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| ![Quicksort with pointers and call stack](docs/screenshots/quicksort.jpg) | ![Kruskal skipping an edge that would close a cycle](docs/screenshots/kruskal.jpg) | ![k-means clusters with regions and inertia](docs/screenshots/kmeans.jpg) |
 
 ## How it works
 
@@ -88,9 +128,9 @@ CI runs lint, typecheck, tests and both builds on every push and pull request to
 
 ## Limits
 
-- Lighthouse accessibility is 100 on Explore and the Lab (desktop and mobile, checked 2026-10-09), but there has been no session with a real screen reader yet (NVDA or VoiceOver).
+- Lighthouse accessibility is 100 on Explore and the Lab (desktop and mobile, checked 2026-10-09), but there has been no session with a real screen reader yet.
 - No browser end-to-end tests in CI; the UI tests run in jsdom.
-- Smoothness was measured on a 60 Hz display only, not on 120 or 144 Hz.
+- Smoothness was measured on a 60 Hz display only.
 - No data-structure family (BST, hash table) and no Bellman-Ford or topological sort yet.
 
 See the [changelog](CHANGELOG.md) and the [audit and scorecard](docs/AUDIT.md) for what changed between versions and how it was checked.
