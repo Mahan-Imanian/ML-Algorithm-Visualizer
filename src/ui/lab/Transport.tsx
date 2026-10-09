@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Run } from "@/core/experiment";
 import { groupIndexAt, nextGroupCursor, prevGroupCursor } from "@/core/trace";
+import { PRESENT_ROWS_PX, STAGE_ROWS_PX } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 import { baseRate, position, SPEEDS, totalLength, useLab, type Granularity } from "@/store/lab";
 import { usePresented } from "../clock";
@@ -423,7 +424,8 @@ export function Transport({ compact, present }: { compact?: boolean; present?: b
   if (compact) {
     return (
       <div
-        className="h-[148px] border-t border-rule bg-surface px-3 pt-1 [contain:strict]"
+        className="border-t border-rule bg-surface px-3 pt-1 [contain:strict]"
+        style={{ height: STAGE_ROWS_PX.phoneTransport }}
         data-tour="timeline"
       >
         <Scrubber />
@@ -441,8 +443,9 @@ export function Transport({ compact, present }: { compact?: boolean; present?: b
     <div
       className={cn(
         "shrink-0 border-t border-rule bg-surface px-3 [contain:layout_paint]",
-        present ? "h-[104px] pb-2 pt-1" : "h-[88px] pb-1.5 pt-1",
+        present ? "pb-2 pt-1" : "pb-1.5 pt-1",
       )}
+      style={{ height: present ? PRESENT_ROWS_PX.transport : STAGE_ROWS_PX.transport }}
       data-tour="timeline"
     >
       <div className="flex items-center gap-3">

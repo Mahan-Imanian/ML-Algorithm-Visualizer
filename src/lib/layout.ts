@@ -1,11 +1,22 @@
 import { useSyncExternalStore } from "react";
 
-export type LayoutMode = "wide" | "medium" | "narrow";
+type LayoutMode = "wide" | "medium" | "narrow";
+
+const WIDE_MIN_PX = 1280;
+const MEDIUM_MIN_PX = 1024;
+const COMPACT_BELOW_PX = 768;
+
+export const STAGE_ROWS_PX = { caption: 104, legend: 28, transport: 88, phoneTransport: 148 };
+export const PRESENT_ROWS_PX = { header: 64, caption: 132, transport: 104 };
 
 export function layoutFor(width: number): LayoutMode {
-  if (width >= 1280) return "wide";
-  if (width >= 1024) return "medium";
+  if (width >= WIDE_MIN_PX) return "wide";
+  if (width >= MEDIUM_MIN_PX) return "medium";
   return "narrow";
+}
+
+export function isCompactWidth(width: number): boolean {
+  return width < COMPACT_BELOW_PX;
 }
 
 function subscribe(cb: () => void) {
@@ -24,7 +35,7 @@ export function useLayout(): LayoutMode {
 export function useIsCompact(): boolean {
   return useSyncExternalStore(
     subscribe,
-    () => window.innerWidth < 768,
+    () => isCompactWidth(window.innerWidth),
     () => false,
   );
 }

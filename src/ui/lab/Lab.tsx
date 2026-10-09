@@ -1,5 +1,5 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { useIsCompact, useLayout } from "@/lib/layout";
+import { STAGE_ROWS_PX, useIsCompact, useLayout } from "@/lib/layout";
 import { navigate } from "@/lib/router";
 import { variantLabel } from "@/core/experiment";
 import { useLab } from "@/store/lab";
@@ -20,7 +20,9 @@ function StageColumn() {
   return (
     <section
       className="grid min-h-0 min-w-0 bg-field"
-      style={{ gridTemplateRows: "minmax(0,1fr) 104px 28px 88px" }}
+      style={{
+        gridTemplateRows: `minmax(0,1fr) ${STAGE_ROWS_PX.caption}px ${STAGE_ROWS_PX.legend}px ${STAGE_ROWS_PX.transport}px`,
+      }}
       aria-label="Visualization"
     >
       <div className="min-h-0 min-w-0 [contain:strict]">

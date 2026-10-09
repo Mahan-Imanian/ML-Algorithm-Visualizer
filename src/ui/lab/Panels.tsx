@@ -259,11 +259,13 @@ function keepInView(el: HTMLElement | null) {
     box.scrollTop = top - box.clientHeight / 2;
 }
 
+const LOG_WINDOW = 30;
+
 export function LogPanel({ run, cursor, which }: { run: Run; cursor: number; which: "a" | "b" }) {
   const seek = useLab((s) => s.seek);
   const events = run.trace.events;
-  const from = Math.max(0, cursor - 30);
-  const to = Math.min(events.length, cursor + 30);
+  const from = Math.max(0, cursor - LOG_WINDOW);
+  const to = Math.min(events.length, cursor + LOG_WINDOW);
   const rows = [];
   for (let i = from; i < to; i++) rows.push(i);
   return (

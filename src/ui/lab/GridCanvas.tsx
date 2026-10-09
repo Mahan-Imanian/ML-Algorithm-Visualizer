@@ -28,6 +28,7 @@ interface Geometry {
 }
 
 const RULER = 16;
+const CELL_MOTION = { stepFraction: 0.9, minMs: 70, maxMs: 240, pausedMs: 200 };
 
 function geometry(W: number, H: number, w: number, h: number): Geometry {
   const probe = Math.floor(Math.min(W / w, H / h));
@@ -152,7 +153,7 @@ export function GridCanvas({ run, which, diff, input, editable, values, label }:
     at: new Float64Array(0),
     pathKey: "",
     pathT: 0,
-    dur: 180,
+    dur: CELL_MOTION.pausedMs,
   });
   const raf = useRef(0);
 
@@ -185,7 +186,10 @@ export function GridCanvas({ run, which, diff, input, editable, values, label }:
       }
       const prev = snap.current;
       const rate = baseRate(s) * SPEEDS[s.speed];
-      a.dur = s.playing ? Math.max(70, Math.min(240, 900 / Math.max(1, rate))) : 200;
+      const fit = (CELL_MOTION.stepFraction * 1000) / Math.max(1, rate);
+      a.dur = s.playing
+        ? Math.max(CELL_MOTION.minMs, Math.min(CELL_MOTION.maxMs, fit))
+        : CELL_MOTION.pausedMs;
       if (prev && prev.status.length === n && !view.current.reduced && !fresh) {
         for (let i = 0; i < n; i++) {
           if (prev.status[i] !== next.status[i]) {

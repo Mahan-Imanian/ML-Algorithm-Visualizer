@@ -5,6 +5,7 @@ import { explain } from "../lab/explain";
 import { parseHash } from "@/lib/router";
 import { searchCommands, type Command } from "../commands";
 import { shortcutFor } from "../shortcuts";
+import { baseRate } from "@/store/lab";
 
 const key = (
   k: string,
@@ -124,6 +125,25 @@ describe("captions", () => {
       expect(end.now, algo).toMatch(/^(Sorted all \d+ values|Stopped after \d+ steps)/);
       expect(end.next).toBeNull();
     }
+  });
+});
+
+describe("playback rate", () => {
+  const rateFor = (algo: Parameters<typeof defaultExperiment>[0], granularity: "step" | "op") => {
+    const runA = runVariant(defaultExperiment(algo), "a")!;
+    return { runA, rate: baseRate({ runA, runB: null, granularity }) };
+  };
+
+  it("plays a mid-sized run in 12 s by step and 20 s by operation at 1x", () => {
+    const step = rateFor("bfs", "step");
+    expect(step.runA.trace.groupEnds.length / step.rate).toBeCloseTo(12, 6);
+    const op = rateFor("bfs", "op");
+    expect(op.runA.trace.events.length / op.rate).toBeCloseTo(20, 6);
+  });
+
+  it("keeps short runs at a readable minimum rate", () => {
+    expect(rateFor("binary", "step").rate).toBe(1.5);
+    expect(rateFor("binary", "op").rate).toBe(3);
   });
 });
 

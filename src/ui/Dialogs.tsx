@@ -191,7 +191,7 @@ export function ImportDialog() {
   };
   const onFile = async (f: File | undefined) => {
     if (!f) return;
-    if (f.size > 2_000_000)
+    if (f.size > MAX_IMPORT_BYTES)
       return setError("That file is too large to be an Algoscope experiment.");
     const r = fromFile(await f.text());
     if (!r.ok) return setError(r.error);
@@ -253,6 +253,7 @@ export function ImportDialog() {
 }
 
 const MOD = isMac ? "⌘" : "Ctrl";
+const MAX_IMPORT_BYTES = 2_000_000;
 
 const SHORTCUTS: [string, string[]][] = [
   ["Play / pause", ["Space"]],
