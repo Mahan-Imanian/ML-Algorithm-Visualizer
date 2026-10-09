@@ -611,7 +611,7 @@ export const ALGOS: AlgoInfo[] = [
       L("∇ ← (∂MSE/∂m, ∂MSE/∂b)", "gradient", 1),
       L("v ← β·v + ∇", undefined, 1),
       L("(m, b) ← (m, b) − lr · v", "update", 1),
-      L("stop if the loss explodes", "diverged", 1),
+      L("stop if the loss diverges", "diverged", 1),
     ],
   },
 ];

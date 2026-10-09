@@ -260,7 +260,7 @@ const SHORTCUTS: [string, string[]][] = [
   ["Step forward / back", ["→", "←"]],
   ["Single operation forward / back", ["⇧ →", "⇧ ←"]],
   ["Jump to start / end", ["Home", "End"]],
-  ["Previous / next checkpoint", ["[", "]"]],
+  ["Previous / next milestone", ["[", "]"]],
   ["Replay from the start", ["R"]],
   ["Slower / faster", ["−", "="]],
   ["Toggle step size (step / op)", ["G"]],
