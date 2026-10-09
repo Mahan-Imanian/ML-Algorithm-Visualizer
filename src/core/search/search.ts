@@ -156,7 +156,7 @@ export function runSearch(input: SearchInput, algo: SearchAlgo): Trace<SearchEve
     let step = jump;
     tb.emit({ k: "range", lo: 0, hi: n - 1, op: "init", note: `Block size ⌊√${n}⌋ = ${jump}` });
     tb.endGroup(n);
-    for (;;) {
+    while (n) {
       const at = Math.min(step, n) - 1;
       const c = cmpOf(at);
       tb.emit({
