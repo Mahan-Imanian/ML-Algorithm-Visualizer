@@ -145,7 +145,9 @@ function why(run: Run, cursor: number): string {
             return "The chosen pivot is moved to the end so the partition loop can use the same code whatever the pivot rule.";
           if (run.algo === "quick" && e.op === "place")
             return "Everything left of i is smaller than the pivot and everything right is not, so this swap puts the pivot in its final position.";
-          return `Swapped ${v(e.i)} and ${v(e.j)}. That is ${s.swaps} swap${s.swaps === 1 ? "" : "s"} so far.`;
+          if (run.algo === "heap")
+            return "The larger child moves up and the parent value sifts down one level.";
+          return `That is ${s.swaps} swap${s.swaps === 1 ? "" : "s"} so far.`;
         case "copy":
           return "Merging needs scratch space: the range is copied into a buffer so the array slots can be overwritten in order.";
         case "write":
