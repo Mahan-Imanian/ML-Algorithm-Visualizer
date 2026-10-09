@@ -1,7 +1,7 @@
 import { MinHeap } from "../heap";
 import { mulberry32 } from "../rng";
 import { TraceBuilder } from "../trace";
-import type { BaseEvent, Machine, Trace } from "../types";
+import type { BaseEvent, Machine, Range, Trace } from "../types";
 
 export type GraphAlgo = "prim" | "kruskal";
 
@@ -20,6 +20,8 @@ export interface GraphInput {
 
 export const GRAPH_MIN = 5;
 export const GRAPH_MAX = 30;
+export const GRAPH_DENSITY: Range = { min: 2, max: 5, step: 1 };
+export const DEFAULT_GRAPH_DENSITY = 3;
 
 export const round3 = (v: number) => Math.round(v * 1000) / 1000;
 
@@ -27,7 +29,7 @@ export function edgeWeight(a: GraphNode, b: GraphNode): number {
   return Math.max(1, Math.round(Math.hypot(a.x - b.x, a.y - b.y) * 100));
 }
 
-export function makeGraph(n: number, seed: number, density = 3): GraphInput {
+export function makeGraph(n: number, seed: number, density = DEFAULT_GRAPH_DENSITY): GraphInput {
   const size = Math.max(GRAPH_MIN, Math.min(GRAPH_MAX, Math.round(n)));
   const rng = mulberry32(seed);
   const nodes: GraphNode[] = [];
@@ -79,7 +81,20 @@ export function connectEdges(nodes: GraphNode[], density: number): [number, numb
   return [...set.values()].sort((x, y) => x[0] - y[0] || x[1] - y[1]);
 }
 
-export function sortedEdgeOrder(input: GraphInput): number[] {
+export function edgesBetween(
+  nodes: GraphNode[],
+  pairs: [number, number][],
+): [number, number, number][] {
+  const unique = new Map<string, [number, number, number]>();
+  for (const [x, y] of pairs) {
+    const a = Math.min(x, y);
+    const b = Math.max(x, y);
+    unique.set(`${a}-${b}`, [a, b, edgeWeight(nodes[a], nodes[b])]);
+  }
+  return [...unique.values()].sort((x, y) => x[0] - y[0] || x[1] - y[1]);
+}
+
+function sortedEdgeOrder(input: GraphInput): number[] {
   return input.edges
     .map((_, i) => i)
     .sort((a, b) => input.edges[a][2] - input.edges[b][2] || a - b);

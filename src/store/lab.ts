@@ -7,6 +7,7 @@ import {
   type Experiment,
   type Run,
 } from "@/core/experiment";
+import { MUD_COST } from "@/core/grid/model";
 import type { AlgoId } from "@/core/info";
 import { nextGroupCursor, prevGroupCursor } from "@/core/trace";
 
@@ -254,7 +255,7 @@ export const useLab = create<LabStore>((set, get) => ({
     set({ tool });
   },
   setWeight(weight) {
-    set({ weight: Math.max(2, Math.min(9, Math.round(weight))) });
+    set({ weight: Math.max(MUD_COST.min, Math.min(MUD_COST.max, Math.round(weight))) });
   },
   setFocusCell(focusCell) {
     set({ focusCell });

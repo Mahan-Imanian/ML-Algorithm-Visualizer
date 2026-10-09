@@ -1,6 +1,6 @@
 import { gaussian, mulberry32 } from "../rng";
 import { TraceBuilder } from "../trace";
-import type { BaseEvent, Machine, Trace } from "../types";
+import type { BaseEvent, Machine, Range, Trace } from "../types";
 import type { Point } from "./kmeans";
 
 export type RegressionData = "linear" | "outliers" | "valley";
@@ -28,6 +28,17 @@ export const DEFAULT_GRADIENT_PARAMS: GradientParams = {
   steps: 80,
 };
 
+export const GRADIENT_LIMITS: Record<keyof GradientParams, Range> = {
+  lr: { min: 0.01, max: 1.5, step: 0.01 },
+  beta: { min: 0, max: 0.95, step: 0.05 },
+  m0: { min: -1.5, max: 2.3, step: 0.1 },
+  b0: { min: -1, max: 1.4, step: 0.1 },
+  steps: { min: 10, max: 300, step: 10 },
+};
+
+export const REGRESSION_POINTS: Range = { min: 10, max: 200, step: 5 };
+export const DEFAULT_REGRESSION_POINTS = 60;
+
 export const REGRESSION_DATASETS: { id: RegressionData; label: string; hint: string }[] = [
   { id: "linear", label: "Clean line", hint: "A straight trend with light noise." },
   { id: "outliers", label: "With outliers", hint: "Four points far off the line pull the fit." },
@@ -43,7 +54,7 @@ export const B_RANGE: [number, number] = [-1.1, 1.5];
 
 export function makeRegression(dataset: RegressionData, n: number, seed: number): RegressionInput {
   const rng = mulberry32(seed);
-  const size = Math.max(10, Math.min(200, Math.round(n)));
+  const size = Math.max(REGRESSION_POINTS.min, Math.min(REGRESSION_POINTS.max, Math.round(n)));
   const points: Point[] = [];
   const lo = dataset === "valley" ? 0.62 : 0.05;
   const hi = dataset === "valley" ? 0.98 : 0.95;
@@ -97,7 +108,8 @@ export function runGradient(input: RegressionInput, params: GradientParams): Tra
   let b = params.b0;
   let vm = 0;
   let vb = 0;
-  const steps = Math.max(1, Math.min(500, Math.round(params.steps)));
+  const { min, max } = GRADIENT_LIMITS.steps;
+  const steps = Math.max(min, Math.min(max, Math.round(params.steps)));
   const opt = bestFit(points);
   const minLoss = lossAt(points, opt.m, opt.b);
   let loss = lossAt(points, m, b);

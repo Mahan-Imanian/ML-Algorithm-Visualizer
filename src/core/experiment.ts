@@ -20,6 +20,7 @@ import {
 import { getAlgo, type AlgoId } from "./info";
 import {
   DEFAULT_GRADIENT_PARAMS,
+  DEFAULT_REGRESSION_POINTS,
   gradientMachine,
   makeRegression,
   runGradient,
@@ -30,6 +31,7 @@ import {
   type RegressionInput,
 } from "./learn/gradient";
 import {
+  DEFAULT_CLUSTER_POINTS,
   DEFAULT_KMEANS_PARAMS,
   kmeansMachine,
   makeClusters,
@@ -233,7 +235,7 @@ export function defaultExperiment(
     return {
       family: "learn",
       model: "kmeans",
-      input: makeClusters("blobs", 200, seed),
+      input: makeClusters("blobs", DEFAULT_CLUSTER_POINTS, seed),
       a: { algo: "kmeans", params: { ...DEFAULT_KMEANS_PARAMS, manual: [] } },
       b: null,
       view,
@@ -242,7 +244,7 @@ export function defaultExperiment(
   return {
     family: "learn",
     model: "gradient",
-    input: makeRegression("linear", 60, seed),
+    input: makeRegression("linear", DEFAULT_REGRESSION_POINTS, seed),
     a: { algo: "gradient", params: { ...DEFAULT_GRADIENT_PARAMS } },
     b: null,
     view,

@@ -39,6 +39,12 @@ export interface Trace<E extends BaseEvent> {
   seriesLabel: string;
 }
 
+export interface Range {
+  min: number;
+  max: number;
+  step: number;
+}
+
 export interface Metric {
   label: string;
   value: number | string;

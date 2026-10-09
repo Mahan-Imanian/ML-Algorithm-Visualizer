@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { defaultExperiment, runVariant, type Experiment } from "../experiment";
+import { defaultExperiment, runVariant, type Experiment, type KMeansExp } from "../experiment";
 import { ALGOS } from "../info";
+import { DEFAULT_GRADIENT_PARAMS, GRADIENT_LIMITS } from "../learn/gradient";
+import { CLUSTER_POINTS, DEFAULT_KMEANS_PARAMS, K_RANGE } from "../learn/kmeans";
 import { SCENARIOS } from "../scenarios";
 import { decode, encode, fromFile, toFile, toPlain } from "../share";
 import { parseCustomValues } from "../sort/input";
@@ -92,6 +94,93 @@ describe("share links", () => {
   });
 });
 
+const codeOf = (plain: unknown) =>
+  btoa(JSON.stringify(plain)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+describe("hand-edited and malformed links", () => {
+  it("keeps a graph whose edges were all removed", () => {
+    const exp = defaultExperiment("kruskal");
+    if (exp.family !== "graph") throw new Error("expected graph");
+    exp.input = { ...exp.input, edges: [] };
+    const r = decode(encode(exp));
+    expect(r.ok && r.exp.family === "graph" && r.exp.input.edges).toEqual([]);
+  });
+
+  it("drops duplicate and reversed edges", () => {
+    const plain = toPlain(defaultExperiment("prim")) as { in: { e: number[][] } };
+    plain.in.e = [
+      [0, 1],
+      [1, 0],
+      [0, 1],
+      [3, 2],
+    ];
+    const r = decode(codeOf({ v: 3, ...plain }));
+    expect(r.ok && r.exp.family === "graph" && r.exp.input.edges.map(([a, b]) => [a, b])).toEqual([
+      [0, 1],
+      [2, 3],
+    ]);
+  });
+
+  it("rejects grid run lengths with trailing or leading junk", () => {
+    const plain = toPlain(defaultExperiment("bfs")) as { in: { c: string } };
+    const [first, ...rest] = plain.in.c.split(".");
+    for (const bad of [
+      `${first}!`,
+      `${first[0]} ${first.slice(1)}`,
+      `${first[0]}+${first.slice(1)}`,
+    ]) {
+      const r = decode(
+        codeOf({ v: 3, ...plain, in: { ...plain.in, c: [bad, ...rest].join(".") } }),
+      );
+      expect(r.ok, bad).toBe(false);
+    }
+  });
+
+  it("decodes a minimal link that leaves every optional field out", () => {
+    const r = decode(codeOf({ f: "sort", a: { algo: "merge" }, in: { v: [4, 3, 2, 1] } }));
+    expect(r.ok).toBe(true);
+    if (r.ok && r.exp.family === "sort") {
+      expect(r.exp.input.values).toEqual([4, 3, 2, 1]);
+      expect(r.exp.b).toBeNull();
+      expect(r.exp.view).toEqual({ values: false, overlay: true });
+      expect(r.cursor).toBe(0);
+    }
+  });
+
+  it("accepts parameters only inside the ranges the editor offers", () => {
+    const plain = toPlain(defaultExperiment("gradient")) as { a: { params: object } };
+    const defaults: Record<string, number> = { ...DEFAULT_GRADIENT_PARAMS };
+    for (const [key, range] of Object.entries(GRADIENT_LIMITS)) {
+      const at = (value: number) => {
+        const params = { ...plain.a.params, [key]: value };
+        const r = decode(codeOf({ v: 3, ...plain, a: { ...plain.a, params } }));
+        if (!r.ok) throw new Error(key);
+        return (r.exp.a.params as Record<string, number>)[key];
+      };
+      expect(at(range.min), key).toBe(range.min);
+      expect(at(range.max), key).toBe(range.max);
+      expect(at(range.max + range.step), key).toBe(defaults[key]);
+      expect(at(range.min - range.step), key).toBe(defaults[key]);
+    }
+  });
+
+  it("accepts k-means and dataset sizes only inside the editor's ranges", () => {
+    const exp = defaultExperiment("kmeans") as KMeansExp;
+    const plain = toPlain(exp) as { a: { params: object }; in: object };
+    const decodeWith = (k: number, n: number) => {
+      const a = { ...plain.a, params: { ...plain.a.params, k } };
+      const r = decode(codeOf({ v: 3, ...plain, a, in: { ...plain.in, n } }));
+      if (!r.ok || r.exp.family !== "learn" || r.exp.model !== "kmeans") throw new Error("kmeans");
+      return [r.exp.a.params.k, r.exp.input.n];
+    };
+    expect(decodeWith(K_RANGE.max, CLUSTER_POINTS.min)).toEqual([K_RANGE.max, CLUSTER_POINTS.min]);
+    expect(decodeWith(K_RANGE.max + 1, CLUSTER_POINTS.min - 1)).toEqual([
+      DEFAULT_KMEANS_PARAMS.k,
+      exp.input.n,
+    ]);
+  });
+});
+
 describe("export and import files", () => {
   it("imports exactly what it exports", () => {
     const exp = SCENARIOS.find((s) => s.id === "greedy-trap")!.build(false);
@@ -112,6 +201,17 @@ describe("export and import files", () => {
       JSON.stringify({ format: "algoscope.experiment", version: 99, experiment: {} }),
     );
     expect(!newer.ok && newer.error).toMatch(/newer version/);
+  });
+
+  it("does not blame a newer version for a missing or malformed version", () => {
+    const exp = toPlain(defaultExperiment("bfs"));
+    for (const version of [undefined, "3", 0, -1, 2.5]) {
+      const r = fromFile(
+        JSON.stringify({ format: "algoscope.experiment", version, experiment: exp }),
+      );
+      expect(r.ok, String(version)).toBe(false);
+      if (!r.ok) expect(r.error, String(version)).not.toMatch(/newer version/);
+    }
   });
 });
 

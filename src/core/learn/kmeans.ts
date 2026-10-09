@@ -1,6 +1,6 @@
 import { gaussian, mulberry32 } from "../rng";
 import { TraceBuilder } from "../trace";
-import type { BaseEvent, Machine, Trace } from "../types";
+import type { BaseEvent, Machine, Range, Trace } from "../types";
 
 export interface Point {
   x: number;
@@ -24,6 +24,11 @@ export interface KMeansParams {
 }
 
 export const DEFAULT_KMEANS_PARAMS: KMeansParams = { k: 4, init: "plusplus", manual: [] };
+
+export const K_RANGE: Range = { min: 1, max: 8, step: 1 };
+export const CLUSTER_POINTS: Range = { min: 60, max: 400, step: 10 };
+export const DEFAULT_CLUSTER_POINTS = 200;
+export const KMEANS_MAX_ITERATIONS = 40;
 
 export const CLUSTER_DATASETS: { id: ClusterData; label: string; hint: string }[] = [
   {
@@ -56,7 +61,7 @@ const clamp01 = (v: number) => Math.min(0.98, Math.max(0.02, v));
 
 export function makeClusters(dataset: ClusterData, n: number, seed: number): ClusterInput {
   const rng = mulberry32(seed);
-  const size = Math.max(30, Math.min(400, Math.round(n)));
+  const size = Math.max(CLUSTER_POINTS.min, Math.min(CLUSTER_POINTS.max, Math.round(n)));
   const pts: Point[] = [];
   const blob = (cx: number, cy: number, sd: number, count: number) => {
     for (let i = 0; i < count; i++)
@@ -148,10 +153,10 @@ function inertiaOf(points: Point[], assign: Int16Array, cents: Point[]): number 
 export function runKMeans(
   input: ClusterInput,
   params: KMeansParams,
-  maxIter = 40,
+  maxIter = KMEANS_MAX_ITERATIONS,
 ): Trace<KMeansEvent> {
   const { points } = input;
-  const k = Math.max(1, Math.min(8, Math.round(params.k)));
+  const k = Math.max(K_RANGE.min, Math.min(K_RANGE.max, Math.round(params.k)));
   const rng = mulberry32(input.seed * 31 + k * 7 + params.init.length);
   const tb = new TraceBuilder<KMeansEvent>("inertia");
   let cents: Point[];
