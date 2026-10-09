@@ -59,7 +59,7 @@ Other inputs at their maximum (64-value sorts, 128-value searches, 30-node graph
 
 Press `P` for presentation mode. The visualization takes the screen, type gets larger, and `C`, `S`, `E` and `M` toggle the code, state, explanation and metrics. `Esc` leaves.
 
-![Presentation mode on a 1920×1080 screen: BFS in a maze with the live queue](screenshots/present.jpg)
+![Presentation mode at 1600×900: BFS in a maze with the live queue](screenshots/present.jpg)
 
 | Command palette (`Ctrl K` or `/`)                                                             | Phone, 390 px                                                        |
 | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
