@@ -135,41 +135,48 @@ const FIELD = [16, 19, 20];
 const LINE = [30, 35, 38];
 const A = [232, 130, 88];
 
-function mark(c, ox, oy, scale) {
-  const S = (v) => v * scale;
-  const L = (x0, y0, x1, y1, w, col) =>
-    c.line(ox + S(x0), oy + S(y0), ox + S(x1), oy + S(y1), S(w), col);
-  L(2, 7, 2, 2, 2, INK);
-  L(2, 2, 7, 2, 2, INK);
-  L(17, 2, 22, 2, 2, INK);
-  L(22, 2, 22, 7, 2, INK);
-  L(22, 17, 22, 22, 2, INK);
-  L(22, 22, 17, 22, 2, INK);
-  L(7, 22, 2, 22, 2, INK);
-  L(2, 22, 2, 17, 2, INK);
-  L(6, 17.5, 10, 17.5, 2.2, SIGNAL);
-  L(10, 17.5, 10, 12.5, 2.2, SIGNAL);
-  L(10, 12.5, 14, 12.5, 2.2, SIGNAL);
-  L(14, 12.5, 14, 6.5, 2.2, SIGNAL);
-  L(14, 6.5, 18, 6.5, 2.2, SIGNAL);
-  c.rect(ox + S(4.5), oy + S(16), S(3), S(3), INK);
-  c.circle(ox + S(18), oy + S(6.5), S(2), SIGNAL);
-}
+const EXPLORED = [44, 86, 102];
+const UNSEEN = [62, 73, 78];
 
-function icon(size) {
-  const c = new Canvas(size, size, size <= 32 ? 8 : 4);
-  const r = size * 0.18;
-  c.rect(r, 0, size - 2 * r, size, GRAPHITE);
-  c.rect(0, r, size, size - 2 * r, GRAPHITE);
+function mark(c, ox, oy, size) {
+  const u = size / 16;
+  const r = size * (3.5 / 16);
+  const R = (x, y, w, h, col) => c.rect(ox + x * u, oy + y * u, w * u, h * u, col);
+  R(r / u, 0, 16 - (2 * r) / u, 16, GRAPHITE);
+  R(0, r / u, 16, 16 - (2 * r) / u, GRAPHITE);
   for (const [x, y] of [
     [r, r],
     [size - r, r],
     [r, size - r],
     [size - r, size - r],
   ])
-    c.circle(x, y, r, GRAPHITE);
-  const pad = size * 0.16;
-  mark(c, pad, pad, (size - 2 * pad) / 24);
+    c.circle(ox + x, oy + y, r, GRAPHITE);
+  R(2, 5, 3, 9, EXPLORED);
+  R(5, 8, 3, 6, EXPLORED);
+  R(8, 11, 3, 3, EXPLORED);
+  for (const k of [2, 5, 8, 11]) R(k, k, 3, 3, SIGNAL);
+  R(2, 11, 3, 3, INK);
+  R(11, 2, 3, 3, INK);
+  R(12, 3, 1, 1, GRAPHITE);
+  if (size < 48) return;
+  const hair = Math.max(1, u / 4) / u;
+  for (const k of [5, 8, 11]) {
+    R(k - hair, 2, hair, 12, GRAPHITE);
+    R(2, k - hair, 12, hair, GRAPHITE);
+  }
+  for (const [x, y] of [
+    [6, 3],
+    [9, 3],
+    [9, 6],
+    [12, 6],
+    [12, 9],
+  ])
+    R(x + 0.25, y + 0.25, 0.5, 0.5, UNSEEN);
+}
+
+function icon(size) {
+  const c = new Canvas(size, size, size <= 32 ? 8 : 4);
+  mark(c, 0, 0, size);
   return c.toPng();
 }
 
@@ -229,7 +236,7 @@ function og(g) {
   c.circle(tx, ty, s * 0.4, INK);
   c.circle(tx, ty, s * 0.28, FIELD);
   c.circle(tx, ty, s * 0.12, INK);
-  mark(c, 60, 34, 2);
+  mark(c, 60, 26, 64);
   return c.toPng();
 }
 

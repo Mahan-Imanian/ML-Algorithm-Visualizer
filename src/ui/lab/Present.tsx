@@ -76,7 +76,7 @@ export function Present() {
       aria-label="Presentation"
     >
       <header className="flex min-w-0 items-center gap-5 overflow-hidden border-b border-rule bg-surface px-5">
-        <Mark size={26} />
+        <Mark />
         <div className="min-w-0">
           <p className="label truncate">{familyName(exp.family)}</p>
           <h1 className="truncate text-xl font-semibold">

@@ -21,7 +21,7 @@
 
 <br>
 
-<a href="https://mahan-imanian.github.io/ML-Algorithm-Visualizer/"><img alt="Algoscope comparing Dijkstra and A* on one weighted grid, with Dijkstra's min-heap and the synced pseudocode beside it" src=".github/assets/showcase.png" width="100%"></a>
+<a href="https://mahan-imanian.github.io/ML-Algorithm-Visualizer/"><img alt="The lab 162 steps into Dijkstra and A* on one grid: both expansions overlaid, Dijkstra's pseudocode on the pq.push line, its min-heap with 18 entries, and a caption for each run" src=".github/assets/showcase.png" width="100%"></a>
 
 Algoscope records every operation of a run and plays it back next to the data structure the algorithm reads from, such as the BFS queue, Dijkstra's heap or quicksort's call stack. Each step has a caption with the actual values, and two algorithms can run on the same input so their counts can be compared directly.
 
@@ -31,31 +31,37 @@ Algoscope records every operation of a run and plays it back next to the data st
 
 Run two algorithms, or two settings of one, on the same grid. The overlay shows both expansions at once, and the Compare panel gives the verdict in plain numbers ("both find a path of cost 46; A\* expands 55% fewer cells") and points to the first cell where the two orders diverge.
 
-<img alt="Playback of A* against Dijkstra: the overlay, the min-heap and the caption move together" src="docs/screenshots/compare.gif" width="100%">
+<img alt="The Compare panel after Dijkstra and A* finish: both paths cost 46, A* expanded 295 cells to Dijkstra's 658, 55% fewer, and the two orders diverge at (12, 4)" src=".github/assets/f-compare.png" width="100%">
+
+<img alt="Playback of the same run: the overlay, Dijkstra's pseudocode, its min-heap and both captions advance together until A* reaches the target first" src="docs/screenshots/compare.gif" width="100%">
 
 ### See the structure the algorithm is deciding from
 
 The BFS queue, DFS stack, Dijkstra's min-heap (stale entries included), A\*'s open set with g, h and f, quicksort's call stack, merge sort's buffer and Kruskal's union-find fragments are always visible. Each step's caption uses real values, for example "a cheaper route to (9, 8) through (10, 8): dist 7 → 6", and the pseudocode line moves with it.
 
-<p align="center">
-  <img alt="Quicksort mid-partition with pointers, the active range and the call stack" src=".github/assets/f-quicksort.png" width="49%">
-  <img alt="Kruskal rejecting an edge that would close a cycle, with union-find fragments" src=".github/assets/f-kruskal.png" width="49%">
-</p>
+<img alt="Dijkstra 61 steps in: expanded cells and the frontier on the grid, the pq.push line highlighted, and the min-heap ordered by distance with 18 entries waiting" src=".github/assets/f-heap.png" width="100%">
+
+<img alt="The caption 'Discover (5, 8) · dist 9' beside the highlighted pseudocode line, the current cell and the heap entry (4, 6) that is settled next" src=".github/assets/f-caption.png" width="100%">
+
+<img alt="Quicksort placing pivot 21 at index 5: lo, i and hi pointers under the bars, the active range shaded, and a call stack five calls deep" src=".github/assets/f-quicksort.png" width="100%">
+
+<img alt="Kruskal skipping edge 5–7 (weight 19) because both ends are already connected, next to the sorted edge list, rejected edges struck through, and 8 fragments left" src=".github/assets/f-kruskal.png" width="100%">
 
 ### Prepared experiments
 
 Explore lists 14 prepared experiments, each with a question such as _Why does breadth-first search always find the fewest moves?_ or _On nearly sorted data, can a quadratic sort beat merge sort?_ The input is built and the run is recorded when you open one. Change a wall, the pivot rule, the heuristic or the learning rate and the run is recorded again.
 
-<p align="center">
-  <img alt="The Explore page listing prepared experiments by question" src=".github/assets/f-explore.png" width="49%">
-  <img alt="k-means after convergence, with Voronoi regions and inertia" src=".github/assets/f-kmeans.png" width="49%">
-</p>
+<img alt="The Explore page: the first six prepared experiments, each titled with its question and the algorithms it runs" src=".github/assets/f-explore.png" width="100%">
+
+In _Bad starting centroids_, k-means++ settles at inertia 1.657 after 2 iterations, while centroids started in a corner settle at 7.718 after 4, with one cluster left empty.
+
+<img alt="k-means++ and corner-started k-means side by side on four blobs: Voronoi regions, final centroids, and the Compare panel with inertia 1.657 against 7.718" src=".github/assets/f-kmeans.png" width="100%">
 
 ### Presentation mode and share links
 
 Press <kbd>P</kbd> for presentation mode: full screen, large type, and toggles for code, state, explanation and metrics. Every experiment is a link: input, seed, settings and optionally the current step are encoded in the URL, and JSON export uses the same format.
 
-<img alt="Presentation mode on a 1920 by 1080 screen: BFS in a maze with the live queue" src=".github/assets/f-present.png" width="100%">
+<img alt="Presentation mode at 1600 by 900: BFS in a maze with the live queue and the caption in large type" src=".github/assets/f-present.png" width="100%">
 
 ## Quick start
 
