@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { FAMILIES } from "@/core/info";
 import type { Family } from "@/core/types";
 import { readJson, writeJson } from "@/lib/storage";
 
@@ -25,11 +26,40 @@ interface LibraryStore {
 const KEY = "algoscope.library.v1";
 const LAST = "algoscope.last.v1";
 
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null;
+
+function isSaved(v: unknown): v is SavedExperiment {
+  return (
+    isRecord(v) &&
+    typeof v.id === "string" &&
+    typeof v.name === "string" &&
+    typeof v.code === "string" &&
+    typeof v.label === "string" &&
+    Number.isFinite(v.savedAt) &&
+    FAMILIES.some((f) => f.id === v.family)
+  );
+}
+
+function readItems(): SavedExperiment[] {
+  const raw = readJson<unknown>(KEY, []);
+  return Array.isArray(raw) ? raw.filter(isSaved) : [];
+}
+
+function readLast(): LibraryStore["last"] {
+  const raw = readJson<unknown>(LAST, null);
+  return isRecord(raw) &&
+    typeof raw.code === "string" &&
+    typeof raw.label === "string" &&
+    Number.isFinite(raw.at)
+    ? (raw as LibraryStore["last"])
+    : null;
+}
+
 export const useLibrary = create<LibraryStore>((set, get) => {
   const persist = () => writeJson(KEY, get().items);
   return {
-    items: readJson<SavedExperiment[]>(KEY, []).filter((x) => x && typeof x.code === "string"),
-    last: readJson<LibraryStore["last"]>(LAST, null),
+    items: readItems(),
+    last: readLast(),
     save(item) {
       const saved: SavedExperiment = {
         ...item,

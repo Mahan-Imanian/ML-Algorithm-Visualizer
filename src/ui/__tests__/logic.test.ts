@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { defaultExperiment, runVariant } from "@/core/experiment";
 import { layoutFor } from "@/lib/layout";
 import { explain } from "../lab/explain";
@@ -124,6 +124,44 @@ describe("captions", () => {
       expect(end.now, algo).toMatch(/^(Sorted all \d+ values|Stopped after \d+ steps)/);
       expect(end.next).toBeNull();
     }
+  });
+});
+
+describe("saved experiments in local storage", () => {
+  afterEach(() => localStorage.clear());
+
+  it("skips entries it cannot show instead of crashing the saved list", async () => {
+    const good = {
+      id: "x1",
+      name: "Mine",
+      savedAt: 1,
+      code: "abc",
+      family: "sort",
+      label: "Merge",
+    };
+    localStorage.setItem(
+      "algoscope.library.v1",
+      JSON.stringify([
+        good,
+        { ...good, id: "x2", family: "trees" },
+        { ...good, id: "x3", name: 5 },
+        { ...good, id: "x4", savedAt: "yesterday" },
+        null,
+        "x5",
+      ]),
+    );
+    localStorage.setItem("algoscope.last.v1", JSON.stringify(5));
+    vi.resetModules();
+    const { useLibrary } = await import("@/store/library");
+    expect(useLibrary.getState().items).toEqual([good]);
+    expect(useLibrary.getState().last).toBeNull();
+  });
+
+  it("starts empty when the stored library is not a list", async () => {
+    localStorage.setItem("algoscope.library.v1", JSON.stringify({ items: [] }));
+    vi.resetModules();
+    const { useLibrary } = await import("@/store/library");
+    expect(useLibrary.getState().items).toEqual([]);
   });
 });
 
