@@ -177,6 +177,21 @@ describe("saved experiments in local storage", () => {
     expect(useLibrary.getState().last).toBeNull();
   });
 
+  it("keeps reading settings stored under the pre-rename key", async () => {
+    localStorage.setItem(
+      "algoscope.settings.v1",
+      JSON.stringify({ theme: "dark", motion: "reduce", singleKey: false, tourDone: true }),
+    );
+    vi.resetModules();
+    const { useSettings } = await import("@/store/settings");
+    expect(useSettings.getState()).toMatchObject({
+      theme: "dark",
+      motion: "reduce",
+      singleKey: false,
+      tourDone: true,
+    });
+  });
+
   it("starts empty when the stored library is not a list", async () => {
     localStorage.setItem("algoscope.library.v1", JSON.stringify({ items: [] }));
     vi.resetModules();

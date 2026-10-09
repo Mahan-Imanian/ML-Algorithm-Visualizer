@@ -81,9 +81,9 @@ export default function App() {
 
   useEffect(() => {
     const titles = {
-      explore: "Algoscope · step through algorithms beside their data structures",
-      lab: "Lab · Algoscope",
-      saved: "Saved experiments · Algoscope",
+      explore: "Stride · step through algorithms beside their data structures",
+      lab: "Lab · Stride",
+      saved: "Saved experiments · Stride",
     };
     document.title = titles[route.name];
   }, [route.name]);

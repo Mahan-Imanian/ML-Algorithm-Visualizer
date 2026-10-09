@@ -124,12 +124,14 @@ describe("lab", () => {
     expect(s.cursorA).toBe(30);
   });
 
-  it("imports a pasted link at its step even when the lab loads slowly", async () => {
+  it("imports a link from the pre-rename address at its step when the lab loads slowly", async () => {
     const exp = SCENARIOS.find((s) => s.id === "weights")!.build(false);
     render(<App />);
     act(() => useUI.setState({ dialog: "import" }));
     fireEvent.change(await screen.findByLabelText("Or paste a link"), {
-      target: { value: `https://example.test/#/lab?e=${encode(exp, 30)}` },
+      target: {
+        value: `https://mahan-imanian.github.io/ML-Algorithm-Visualizer/#/lab?e=${encode(exp, 30)}`,
+      },
     });
     vi.useFakeTimers();
     fireEvent.click(screen.getByRole("button", { name: "Open link" }));

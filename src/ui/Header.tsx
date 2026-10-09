@@ -120,11 +120,11 @@ export function Header({ route }: { route: "explore" | "lab" | "saved" }) {
       <a
         href="#/"
         className="flex h-12 items-center gap-2 px-3 text-ink"
-        aria-label="Algoscope home"
+        aria-label="Stride home"
       >
         <Mark />
         <span className={cn("text-md font-semibold tracking-tight", narrow && isLab && "sr-only")}>
-          Algoscope
+          Stride
         </span>
       </a>
       {!(narrow && isLab) && (
@@ -264,7 +264,7 @@ export function Header({ route }: { route: "explore" | "lab" | "saved" }) {
             <MenuItem
               onSelect={() =>
                 window.open(
-                  "https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer",
+                  "https://github.com/Mahan-Imanian/stride",
                   "_blank",
                   "noopener",
                 )

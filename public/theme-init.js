@@ -1,8 +1,8 @@
-var algoscopeTheme = "light";
+var strideTheme = "light";
 try {
   var t = JSON.parse(localStorage.getItem("algoscope.settings.v1") || "{}").theme || "system";
-  if (t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches)) algoscopeTheme = "dark";
+  if (t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches)) strideTheme = "dark";
 } catch {
-  algoscopeTheme = "light";
+  strideTheme = "light";
 }
-document.documentElement.dataset.theme = algoscopeTheme;
+document.documentElement.dataset.theme = strideTheme;

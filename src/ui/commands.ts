@@ -32,7 +32,7 @@ const goLab = () => {
 export function exportExperiment() {
   const s = lab();
   downloadText(
-    `algoscope-${s.exp.a.algo}${s.exp.b ? `-vs-${s.exp.b.algo}` : ""}.json`,
+    `stride-${s.exp.a.algo}${s.exp.b ? `-vs-${s.exp.b.algo}` : ""}.json`,
     toFile(s.exp, s.cursorA),
   );
 }

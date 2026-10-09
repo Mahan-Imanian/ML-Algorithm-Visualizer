@@ -107,7 +107,7 @@ export function ShareDialog() {
             <Button
               onClick={() => {
                 navigator
-                  .share({ title: "Algoscope experiment", text: labelForCurrent(), url })
+                  .share({ title: "Stride experiment", text: labelForCurrent(), url })
                   .catch(() => undefined);
               }}
             >
@@ -192,7 +192,7 @@ export function ImportDialog() {
   const onFile = async (f: File | undefined) => {
     if (!f) return;
     if (f.size > MAX_IMPORT_BYTES)
-      return setError("That file is too large to be an Algoscope experiment.");
+      return setError("That file is too large to be a Stride experiment.");
     const r = fromFile(await f.text());
     if (!r.ok) return setError(r.error);
     loadCode(encode(r.exp, r.cursor));
@@ -210,7 +210,7 @@ export function ImportDialog() {
       open={open}
       onOpenChange={(o) => !o && close()}
       title="Import an experiment"
-      description="Open a file exported from Algoscope, or paste a shared link."
+      description="Open an exported experiment file, or paste a shared link."
     >
       <div className="space-y-5">
         <div>
