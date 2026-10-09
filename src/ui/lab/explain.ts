@@ -155,7 +155,9 @@ function why(run: Run, cursor: number): string {
         case "sorted":
           return e.op === "early"
             ? "A full pass with no swaps proves every neighbor is in order, so bubble sort stops early."
-            : "These positions will not change again.";
+            : run.algo === "insertion"
+              ? "The prefix is in order but not settled: a smaller value further right can still slide into it."
+              : "These positions will not change again.";
         case "range":
           return e.push
             ? `Recursing into indices ${e.lo}..${e.hi}. Outside this range is dimmed.`

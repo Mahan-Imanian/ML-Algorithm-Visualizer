@@ -206,7 +206,7 @@ export function Legend() {
             ["bg-st-open", "compared"],
             ["bg-signal", "moved"],
             ["bg-ink", "pivot"],
-            ["bg-st-path", "final position"],
+            ["bg-st-path", "sorted"],
             ["bg-sunken", "active range"],
           ]
         : exp.family === "search"
