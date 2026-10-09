@@ -127,6 +127,10 @@ function checkResult(run: Run) {
       const last = run.trace.events[end - 1];
       expect(s.done).toBe(true);
       expect(s.found).toBe(last.k === "found" ? last.i : -1);
+      run.trace.groupEnds.forEach((at, g) => {
+        const x = run.player.at(at).state;
+        expect(x.done ? 0 : Math.max(0, x.hi - x.lo + 1), `group ${g}`).toBe(run.trace.series[g]);
+      });
       break;
     }
     case "graph": {

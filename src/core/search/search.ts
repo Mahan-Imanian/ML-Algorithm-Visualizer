@@ -51,7 +51,7 @@ export function makeSearchInput(n: number, mode: TargetMode, seed: number): Sear
 
 export type SearchEvent = BaseEvent &
   (
-    | { k: "probe"; i: number; cmp: "<" | "=" | ">" }
+    | { k: "probe"; i: number; cmp: "<" | "=" | ">"; lo?: number }
     | { k: "range"; lo: number; hi: number }
     | { k: "found"; i: number }
     | { k: "absent" }
@@ -85,8 +85,9 @@ export function runSearch(input: SearchInput, algo: SearchAlgo): Trace<SearchEve
         k: "probe",
         i,
         cmp: c,
+        lo: c === "<" ? i + 1 : undefined,
         op: "probe",
-        note: `a[${i}] = ${values[i]} ${c === "=" ? "=" : c === "<" ? "<" : ">"} ${target}`,
+        note: `a[${i}] = ${values[i]} ${c} ${target}`,
       });
       left = n - i - 1;
       if (c === "=") {
@@ -196,7 +197,14 @@ export function runSearch(input: SearchInput, algo: SearchAlgo): Trace<SearchEve
     tb.checkpoint("Block located");
     for (let i = prev; i < Math.min(step, n); i++) {
       const c = cmpOf(i);
-      tb.emit({ k: "probe", i, cmp: c, op: "probe", note: `Scan a[${i}] = ${values[i]}` });
+      tb.emit({
+        k: "probe",
+        i,
+        cmp: c,
+        lo: c === "<" ? i + 1 : undefined,
+        op: "probe",
+        note: `Scan a[${i}] = ${values[i]}`,
+      });
       if (c === "=") {
         tb.emit({ k: "found", i, op: "found", note: `Found ${target} at index ${i}` });
         tb.endGroup(0);
@@ -233,6 +241,7 @@ export const searchMachine: Machine<SearchInput, SearchEvent, SearchState> = {
       s.cmp = e.cmp;
       s.probed[e.i] = 1;
       s.probes++;
+      if (e.lo !== undefined) s.lo = e.lo;
     } else if (e.k === "range") {
       s.lo = e.lo;
       s.hi = e.hi;
