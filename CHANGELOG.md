@@ -2,7 +2,16 @@
 
 ## Unreleased
 
-Changes from the [2026-10-09 credibility audit](docs/AUDIT.md#credibility-audit-2026-10-09-unreleased) and the QA pass before it.
+### Changed
+
+- Renamed from Algoscope to Stride. The repository moved from `Mahan-Imanian/ML-Algorithm-Visualizer` to `Mahan-Imanian/stride` (GitHub redirects the old repository URL).
+- The site moved from `https://mahan-imanian.github.io/ML-Algorithm-Visualizer/` to `https://mahan-imanian.github.io/stride/`. The old address now returns 404; links shared from it still open through **Import experiment**.
+- Exported files use the format name `stride.experiment`. Files exported as `algoscope.experiment` still import, and settings and saved experiments are kept.
+- Parameter ranges are defined once per algorithm and shared by the editor, the link decoder and the generators.
+- Tuning constants are named and documented in [docs/internals.md](docs/internals.md#tuning-constants).
+- The scatter terrain hint says the generator redraws until the target is reachable instead of "always solvable".
+- Figures in the README and docs that no script in the repository reproduces were removed.
+- New mark and recaptured screenshots.
 
 ### Fixed
 
@@ -11,31 +20,36 @@ Changes from the [2026-10-09 credibility audit](docs/AUDIT.md#credibility-audit-
 - Grid cells in a link were accepted with trailing characters after a run length.
 - An imported file with a missing or malformed version was reported as coming from a newer version.
 - Links accepted parameter values outside the editor's ranges, such as 500 gradient steps.
-- Custom sort input accepted hexadecimal, binary and exponent notation and converted it silently.
-- A saved experiment with an unknown family crashed the saved list, and a stored library that was not a list crashed the app on load.
-- Importing a file or link at a saved step could open at step 0 when the lab loaded slowly.
-- From the QA pass: diagonal steps were detected wrongly in path costs; jump search ran its jump phase on an empty array; differing spanning-tree weights were blamed on the wrong cause; insertion sort's sorted prefix was called final; selection sort's About text overstated its swaps; the gradient run hid its start parameters at step 0; linear search did not narrow its candidate range; the theme toggle stopped working after the first switch; legends clipped at 390 px; presentation mode did not fit phones; the timeline thumb jumped back after a stale frame; reduced motion used 0.01 ms transitions, which Lighthouse counted as layout shift.
-
-### Changed
-
-- Parameter ranges are defined once per algorithm and shared by the editor, the link decoder and the generators.
-- Playback rates, keyframe intervals, motion timing, layout heights, breakpoints and generator thresholds are named constants, documented in [docs/internals.md](docs/internals.md#tuning-constants).
-- The scatter terrain hint now says what the generator does (redraws until the target is reachable) instead of "always solvable".
-- README, internals and audit figures were re-measured with the new scripts or removed. The self-assigned scorecards were removed from the audit.
+- Custom sort input accepted hexadecimal, binary and exponent notation.
+- A saved experiment with an unknown family crashed the saved list.
+- A stored library that was not a list crashed the app on load.
+- Importing a file or link at a saved step could open at step 0.
+- Diagonal steps were detected wrongly in path costs.
+- Jump search ran its jump phase on an empty array.
+- Differing spanning-tree weights were blamed on the wrong cause.
+- Insertion sort's sorted prefix was called final.
+- Selection sort's About text overstated its swaps.
+- The gradient run hid its start parameters at step 0.
+- Linear search did not narrow its candidate range.
+- The theme toggle stopped working after the first switch.
+- Legends were clipped at 390 px.
+- Presentation mode did not fit phones.
+- The timeline thumb jumped back after a stale frame.
+- Reduced motion used 0.01 ms transitions, which caused layout shift.
 
 ### Added
 
-- `npm run bench`, `npm run perf` and `npm run lighthouse`, with `puppeteer-core` as a dev dependency for the frame-time script.
-- Tests for the colour-token contrast ratios, for the figures quoted in the README, for malformed links and files, and property and trace-integrity tests for every family.
-- A new mark and recaptured screenshots.
+- `npm run bench`, `npm run perf` and `npm run lighthouse`.
+- Tests for colour-token contrast, the figures quoted in the README, malformed links and files, and per-family properties and trace integrity.
 
 ### Removed
 
-- Unused exports, icons and helpers found by `knip`.
+- Unused exports, icons and helpers.
+- The review history file in `docs/`. Its maintainer notes moved to [docs/internals.md](docs/internals.md).
 
 ## 3.1.0
 
-Layout stability, rendering and presentation. See [docs/AUDIT.md](docs/AUDIT.md#310-follow-up-audit-of-300) for the findings. The figures below were measured once at release; `npm run perf` now repeats the canvas-size and frame-time checks for the current code.
+Layout stability, rendering and presentation. Released as Algoscope. The figures below were measured once at release; `npm run perf` now repeats the canvas-size and frame-time checks for the current code.
 
 ### Fixed
 
@@ -61,7 +75,7 @@ Layout stability, rendering and presentation. See [docs/AUDIT.md](docs/AUDIT.md#
 
 ## 3.0.0
 
-A rebuild based on the October 2026 audit of 2.0.0. See [docs/AUDIT.md](docs/AUDIT.md#200--300-audit) for each finding and how it was resolved.
+A rebuild of 2.0.0 after a review in October 2026. Released as Algoscope.
 
 ### Added
 
