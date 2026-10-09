@@ -258,7 +258,7 @@ export const ALGOS: AlgoInfo[] = [
     summary: "Scans the unsorted part for its minimum and moves it to the front.",
     how: [
       "Pass i finds the smallest value in a[i..n-1].",
-      "Exactly one swap per pass, but always n²/2 comparisons.",
+      "At most one swap per pass, but always n(n−1)/2 comparisons.",
       "Input order does not change the number of comparisons.",
     ],
     watch: "Count comparisons on sorted input: it does the same work as on random input.",
