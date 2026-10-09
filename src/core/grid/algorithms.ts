@@ -110,7 +110,7 @@ export function runGrid(
     tb.emit({
       k: "found",
       op,
-      note: `Target reached. The reconstructed path has ${path.length - 1} edges and costs ${round2(cost)}`,
+      note: `Target reached: path of ${path.length - 1} moves, cost ${round2(cost)}`,
       path,
       cost: round2(cost),
     });
