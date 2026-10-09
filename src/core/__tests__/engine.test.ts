@@ -316,7 +316,8 @@ describe("gradient descent", () => {
   it("converges to the least-squares fit at the default learning rate", () => {
     const input = makeRegression("linear", 60, 4);
     const trace = runGradient(input, { lr: 0.6, beta: 0, m0: -1, b0: 1, steps: 300 });
-    const s = new Player(gradientMachine, input, trace.events).at(trace.events.length).state;
+    const start = { ...input, m0: -1, b0: 1 };
+    const s = new Player(gradientMachine, start, trace.events).at(trace.events.length).state;
     const opt = bestFit(input.points);
     expect(s.m).toBeCloseTo(opt.m, 2);
     expect(s.b).toBeCloseTo(opt.b, 2);
@@ -333,7 +334,8 @@ describe("gradient descent", () => {
     const plain = runGradient(input, { lr: 0.55, beta: 0, m0: -1, b0: 1, steps: 120 });
     const mom = runGradient(input, { lr: 0.3, beta: 0.8, m0: -1, b0: 1, steps: 120 });
     const last = (t: typeof plain) =>
-      new Player(gradientMachine, input, t.events).at(t.events.length).state.loss;
+      new Player(gradientMachine, { ...input, m0: -1, b0: 1 }, t.events).at(t.events.length).state
+        .loss;
     expect(last(plain)).toBeGreaterThan(
       lossAt(input.points, bestFit(input.points).m, bestFit(input.points).b),
     );

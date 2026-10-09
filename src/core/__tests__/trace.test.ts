@@ -235,6 +235,9 @@ function checkEvent(run: Run, k: number) {
     }
     case "gradient": {
       const e = run.trace.events[k];
+      const s0 = run.player.at(k).state;
+      if (e.k === "start")
+        expect(e.note).toBe(`Start at m = ${fx(s0.m)}, b = ${fx(s0.b)} · loss ${fx(s0.loss)}`);
       const s = run.player.at(k + 1).state;
       if (e.k === "gradient") expect(e.note).toContain(`Step ${s.step + 1}:`);
       if (e.k === "update")
