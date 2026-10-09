@@ -171,7 +171,7 @@ function GridState({ run, cursor }: { run: Extract<Run, { family: "grid" }>; cur
         <p className="mt-1 h-4 text-xs text-ink-3">
           {list.length > shown.length ? `+ ${list.length - shown.length} more` : ""}
         </p>
-        {kind === "pq" && (
+        {kind === "pq" && run.algo !== "greedy" && (
           <p className="mt-2 text-xs text-ink-3">
             Struck-through rows are stale duplicates left behind by a cheaper route.
           </p>
