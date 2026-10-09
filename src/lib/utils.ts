@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 
-const PUBLIC_URL = "https://mahan-imanian.github.io/ML-Algorithm-Visualizer/";
+const PUBLIC_URL = "https://mahan-imanian.github.io/stride/";
 
 export function appBaseUrl(): string {
   if (typeof location === "undefined") return PUBLIC_URL;

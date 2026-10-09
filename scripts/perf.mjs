@@ -4,7 +4,7 @@ import { build } from "esbuild";
 import puppeteer from "puppeteer-core";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const BASE = process.env.BASE ?? "http://localhost:4173/ML-Algorithm-Visualizer/";
+const BASE = process.env.BASE ?? "http://localhost:4173/stride/";
 const CHROME = process.env.CHROME_PATH;
 const THROTTLE = Number(process.env.THROTTLE ?? 1);
 const MAX_PLAY_MS = 8000;

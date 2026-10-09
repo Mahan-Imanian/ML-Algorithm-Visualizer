@@ -196,19 +196,29 @@ describe("export and import files", () => {
     const notJson = fromFile("{oops");
     expect(!notJson.ok && notJson.error).toMatch(/not valid JSON/);
     const other = fromFile(JSON.stringify({ hello: 1 }));
-    expect(!other.ok && other.error).toMatch(/not an Algoscope experiment/);
+    expect(!other.ok && other.error).toMatch(/not a Stride experiment/);
     const newer = fromFile(
-      JSON.stringify({ format: "algoscope.experiment", version: 99, experiment: {} }),
+      JSON.stringify({ format: "stride.experiment", version: 99, experiment: {} }),
     );
     expect(!newer.ok && newer.error).toMatch(/newer version/);
+  });
+
+  it("writes the stride format and still imports files exported as Algoscope", () => {
+    const exp = SCENARIOS.find((s) => s.id === "greedy-trap")!.build(false);
+    const file = JSON.parse(toFile(exp, 7));
+    expect(file.format).toBe("stride.experiment");
+    const legacy = fromFile(JSON.stringify({ ...file, format: "algoscope.experiment" }));
+    expect(legacy.ok).toBe(true);
+    if (legacy.ok) {
+      expect(legacy.cursor).toBe(7);
+      sameRun(exp, legacy.exp);
+    }
   });
 
   it("does not blame a newer version for a missing or malformed version", () => {
     const exp = toPlain(defaultExperiment("bfs"));
     for (const version of [undefined, "3", 0, -1, 2.5]) {
-      const r = fromFile(
-        JSON.stringify({ format: "algoscope.experiment", version, experiment: exp }),
-      );
+      const r = fromFile(JSON.stringify({ format: "stride.experiment", version, experiment: exp }));
       expect(r.ok, String(version)).toBe(false);
       if (!r.ok) expect(r.error, String(version)).not.toMatch(/newer version/);
     }

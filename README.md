@@ -1,17 +1,17 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/cover-dark.png">
-  <img alt="Algoscope: an algorithm lab that records every step and plays it back next to the data structure. 18 algorithms, 5 families, side-by-side compare, MIT." src=".github/assets/cover-light.png" width="100%">
+  <img alt="Stride: an algorithm lab that records every step and plays it back next to the data structure. 18 algorithms, 5 families, side-by-side compare, MIT." src=".github/assets/cover-light.png" width="100%">
 </picture>
 
 <p align="center">
-  <a href="https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer/actions/workflows/ci.yml"><img alt="CI status" src="https://img.shields.io/github/actions/workflow/status/Mahan-Imanian/ML-Algorithm-Visualizer/ci.yml?branch=main&style=flat-square&label=CI"></a>
-  <a href="https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer/actions/workflows/deploy.yml"><img alt="Deploy status" src="https://img.shields.io/github/actions/workflow/status/Mahan-Imanian/ML-Algorithm-Visualizer/deploy.yml?branch=main&style=flat-square&label=deploy"></a>
+  <a href="https://github.com/Mahan-Imanian/stride/actions/workflows/ci.yml"><img alt="CI status" src="https://img.shields.io/github/actions/workflow/status/Mahan-Imanian/stride/ci.yml?branch=main&style=flat-square&label=CI"></a>
+  <a href="https://github.com/Mahan-Imanian/stride/actions/workflows/deploy.yml"><img alt="Deploy status" src="https://img.shields.io/github/actions/workflow/status/Mahan-Imanian/stride/deploy.yml?branch=main&style=flat-square&label=deploy"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-3d7bfd?style=flat-square"></a>
-  <a href="https://mahan-imanian.github.io/ML-Algorithm-Visualizer/"><img alt="Open the live demo" src="https://img.shields.io/badge/live_demo-open-ff6a3d?style=flat-square"></a>
+  <a href="https://mahan-imanian.github.io/stride/"><img alt="Open the live demo" src="https://img.shields.io/badge/live_demo-open-ff6a3d?style=flat-square"></a>
 </p>
 
 <p align="center">
-  <a href="https://mahan-imanian.github.io/ML-Algorithm-Visualizer/"><b>Open the lab</b></a> ·
+  <a href="https://mahan-imanian.github.io/stride/"><b>Open the lab</b></a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#what-you-can-do">Features</a> ·
   <a href="#algorithms">Algorithms</a> ·
@@ -21,9 +21,9 @@
 
 <br>
 
-<a href="https://mahan-imanian.github.io/ML-Algorithm-Visualizer/"><img alt="The lab 162 steps into Dijkstra and A* on one grid: both expansions overlaid, Dijkstra's pseudocode on the pq.push line, its min-heap with 18 entries, and a caption for each run" src=".github/assets/showcase.png" width="100%"></a>
+<a href="https://mahan-imanian.github.io/stride/"><img alt="The lab 162 steps into Dijkstra and A* on one grid: both expansions overlaid, Dijkstra's pseudocode on the pq.push line, its min-heap with 18 entries, and a caption for each run" src=".github/assets/showcase.png" width="100%"></a>
 
-Algoscope records every operation of a run and plays it back next to the data structure the algorithm reads from, such as the BFS queue, Dijkstra's heap or quicksort's call stack. Each step has a caption with the actual values, and two algorithms can run on the same input so their counts can be compared directly.
+Stride records every operation of a run and plays it back next to the data structure the algorithm reads from, such as the BFS queue, Dijkstra's heap or quicksort's call stack. Each step has a caption with the actual values, and two algorithms can run on the same input so their counts can be compared directly.
 
 ## What you can do
 
@@ -65,16 +65,16 @@ Press <kbd>P</kbd> for presentation mode: full screen, large type, and toggles f
 
 ## Quick start
 
-Open the [hosted lab](https://mahan-imanian.github.io/ML-Algorithm-Visualizer/), or run it locally with Node 20 or newer:
+Open the [hosted lab](https://mahan-imanian.github.io/stride/), or run it locally with Node 20 or newer:
 
 ```bash
-git clone https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer.git
-cd ML-Algorithm-Visualizer
+git clone https://github.com/Mahan-Imanian/stride.git
+cd stride
 npm install
 npm run dev
 ```
 
-Then open http://localhost:5173/ML-Algorithm-Visualizer/.
+Then open http://localhost:5173/stride/.
 
 ## Algorithms
 
@@ -86,7 +86,7 @@ Then open http://localhost:5173/ML-Algorithm-Visualizer/.
 | Spanning trees | Prim, Kruskal (union-find)                                                                                                                               | Candidate heap or sorted edges, fragments, rejected edges             |
 | Learning       | k-means (k-means++, random, deliberately bad or hand-placed centroids), gradient descent on linear regression (learning rate, momentum, start)           | Voronoi regions and inertia; loss surface, descent path, gradient     |
 
-Each algorithm has an About panel with complexity, guarantees, the state it keeps, common mistakes and when to use it. Despite the repository name, only the last two are machine learning.
+Each algorithm has an About panel with complexity, guarantees, the state it keeps, common mistakes and when to use it.
 
 ## How it works
 
@@ -150,7 +150,9 @@ CI runs lint, typecheck, tests and both builds on every push and pull request to
 - The UI tests run in jsdom. There are no browser end-to-end tests in CI.
 - No data-structure family (BST, hash table) and no Bellman-Ford or topological sort yet.
 
-See the [changelog](CHANGELOG.md) and the [audit history](docs/AUDIT.md) for what changed between versions and how it was checked.
+See the [changelog](CHANGELOG.md) for what changed between versions.
+
+Stride was called Algoscope until October 2026, and the repository was `ML-Algorithm-Visualizer`. GitHub redirects the old repository URL, but the old site at `/ML-Algorithm-Visualizer/` no longer exists. A link shared from it can still be opened by pasting it into **Import experiment** in the ⋯ menu, and files exported under the old name still import. Settings and saved experiments carry over because the origin is the same and the storage keys did not change.
 
 ## License
 

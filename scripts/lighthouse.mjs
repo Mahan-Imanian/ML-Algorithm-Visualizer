@@ -3,13 +3,13 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const BASE = process.env.BASE ?? "http://localhost:4173/ML-Algorithm-Visualizer/";
+const BASE = process.env.BASE ?? "http://localhost:4173/stride/";
 const VERSION = "12.8.2";
 const cli = process.env.LIGHTHOUSE_CLI
   ? ["node", [process.env.LIGHTHOUSE_CLI]]
   : ["npx", ["--yes", `lighthouse@${VERSION}`]];
 const pages = { explore: "#/", lab: "#/lab?algo=bfs" };
-const out = mkdtempSync(path.join(os.tmpdir(), "algoscope-lh-"));
+const out = mkdtempSync(path.join(os.tmpdir(), "stride-lh-"));
 
 for (const [page, hash] of Object.entries(pages)) {
   for (const formFactor of ["mobile", "desktop"]) {

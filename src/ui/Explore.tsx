@@ -64,7 +64,7 @@ export function Explore() {
             Run an algorithm one step at a time, with its queue, heap or call stack beside it.
           </h1>
           <p className="mt-4 max-w-[52ch] text-md text-ink-2">
-            Algoscope records each operation of a run, so you can scrub forward and backward while
+            Stride records each operation of a run, so you can scrub forward and backward while
             the pseudocode highlights the line that ran. Two algorithms can run on the same input
             for comparison, and a link reopens the exact setup.
           </p>
@@ -189,9 +189,9 @@ export function Explore() {
       )}
 
       <footer className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-rule pt-6 text-sm text-ink-3">
-        <span>Algoscope · MIT licensed</span>
+        <span>Stride · MIT licensed</span>
         <a
-          href="https://github.com/Mahan-Imanian/ML-Algorithm-Visualizer"
+          href="https://github.com/Mahan-Imanian/stride"
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center gap-1.5 hover:text-ink"

@@ -39,7 +39,8 @@ import { SEARCH_MAX, SEARCH_MIN, type TargetMode } from "./search/search";
 import { SORT_MAX, SORT_MIN, SORT_VALUE_MAX, SORT_VALUE_MIN, type SortPreset } from "./sort/input";
 import type { Range } from "./types";
 
-const FORMAT = "algoscope.experiment";
+const FORMAT = "stride.experiment";
+const LEGACY_FORMATS = ["algoscope.experiment"];
 const VERSION = 3;
 
 type Json = Record<string, unknown>;
@@ -175,12 +176,12 @@ export function fromFile(text: string): DecodeResult {
   } catch {
     return { ok: false, error: "That file is not valid JSON." };
   }
-  if (!isObj(raw) || raw.format !== FORMAT)
-    return { ok: false, error: "That file is not an Algoscope experiment." };
+  if (!isObj(raw) || !(raw.format === FORMAT || LEGACY_FORMATS.includes(raw.format as string)))
+    return { ok: false, error: "That file is not a Stride experiment." };
   if (int(raw.version, 1, Number.MAX_SAFE_INTEGER) === null)
     return { ok: false, error: "That file has no valid format version." };
   if ((raw.version as number) > VERSION)
-    return { ok: false, error: "That file was made by a newer version of Algoscope." };
+    return { ok: false, error: "That file was made by a newer version of Stride." };
   return fromPlain({ v: raw.version, ...(isObj(raw.experiment) ? raw.experiment : {}) });
 }
 
@@ -271,7 +272,7 @@ function fromPlain(raw: unknown): DecodeResult {
   try {
     if (!isObj(raw)) throw new Invalid("not an object");
     if (typeof raw.v === "number" && raw.v > VERSION)
-      return { ok: false, error: "This experiment was made by a newer version of Algoscope." };
+      return { ok: false, error: "This experiment was made by a newer version of Stride." };
     const family = oneOf(raw.f, ["grid", "sort", "search", "graph", "learn"] as const);
     if (!family) throw new Invalid("unknown family");
     const inp = isObj(raw.in) ? raw.in : {};

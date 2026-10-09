@@ -1,6 +1,6 @@
-# Algoscope internals
+# Stride internals
 
-Source layout, rendering model, measurements, tuning constants, accessibility notes, the keyboard map and how to add an algorithm. The design decisions behind the architecture are in the [README](../README.md#design-decisions); the audit history is in [AUDIT.md](AUDIT.md).
+Source layout, rendering model, storage, measurements, tuning constants, visual design, accessibility notes, the keyboard map and how to add an algorithm. The design decisions behind the architecture are in the [README](../README.md#design-decisions).
 
 ## Source layout
 
@@ -17,6 +17,8 @@ src/store/       Zustand: lab (experiment, runs, cursors, playback), library, se
 src/ui/          React: Explore, Lab (Setup / Stage / Inspector / Transport), Present, palette, dialogs
   clock.ts       the two clocks: live cursor for canvases, 20 Hz presented cursor for panels
   perf.ts        frame, draw and render counters behind the frame monitor (H)
+  lab/setup/     input editors, one file per family (grid, sort, search, graph, learn)
+  lab/gridDraw.ts  pure drawing for the grid canvas: terrain, cells, values, paths, markers
 scripts/         images, extension packaging, performance and Lighthouse runs
 extension/       Manifest V3 build of the same app
 ```
@@ -28,6 +30,18 @@ extension/       Manifest V3 build of the same app
 **Fixed layout tracks.** The stage sits in fixed grid rows (`STAGE_ROWS_PX` in `src/lib/layout.ts`) with `contain: strict`. Captions have a fixed height and are clamped, headers are single-line with fixed-width tabular readouts, and scrolling panes reserve their scrollbar gutter, so text changes cannot resize the visualization. `npm run perf` checks this by recording each canvas's box on every frame.
 
 **Pseudocode lines are checked.** Every event names the pseudocode line it belongs to. `src/core/__tests__/pseudocode.test.ts` runs every algorithm and scenario and checks that each named line exists and matches the event.
+
+**The grid canvas is layered.** `GridCanvas.tsx` owns state sync, animation timing and pointer and keyboard editing. `gridDraw.ts` has no React: it pre-renders the terrain (walls, mud hatching, rulers) once per input, size and theme, then draws each frame as cells, distance labels, enqueue edges, the parent trail of the hovered cell, paths, the current cells, start and target, and the keyboard focus, in that order.
+
+## Storage and the rename
+
+The app was called Algoscope until October 2026. The rename kept everything a returning user has:
+
+- `localStorage` keys keep their old names: `algoscope.settings.v1` (also read by `public/theme-init.js` before the app loads), `algoscope.library.v1` and `algoscope.last.v1`. The new Pages path is on the same origin, so stored data carries over. Renaming the keys would need a migration in two places for no user-visible gain.
+- Exported files use `"format": "stride.experiment"`. `fromFile` in `src/core/share.ts` also accepts `"algoscope.experiment"`.
+- Share links contain no name; the experiment is the `e` parameter. Links to the old `/ML-Algorithm-Visualizer/` path 404 on GitHub Pages, but the Import dialog accepts any URL with an `e` parameter.
+
+`src/ui/__tests__/logic.test.ts`, `src/ui/__tests__/app.test.tsx` and `src/core/__tests__/share.test.ts` cover each of these.
 
 ## Measurements
 
@@ -64,7 +78,7 @@ npx vite preview --port 4173 --strictPort
 CHROME_PATH="/path/to/chrome" npm run perf
 ```
 
-`npm run perf -- bfs` runs only the cases whose name contains `bfs`. `BASE` overrides the URL (default `http://localhost:4173/ML-Algorithm-Visualizer/`), and `THROTTLE=4` slows the CPU fourfold through DevTools.
+`npm run perf -- bfs` runs only the cases whose name contains `bfs`. `BASE` overrides the URL (default `http://localhost:4173/stride/`), and `THROTTLE=4` slows the CPU fourfold through DevTools.
 
 For each of the 18 algorithms, 3 prepared comparisons and 2 comparisons on the 61×37 grid, at 1× and 4×, it plays the run for up to 8 s at 1440×900 and reports: `requestAnimationFrame` intervals (median, 95th percentile, worst, count over 25 ms), long tasks, the number of distinct boxes each canvas had, the largest single canvas draw and the highest React render rate from the frame monitor, JS heap, page errors and requests to other origins.
 
@@ -94,7 +108,7 @@ Last run on 2026-10-09 against `vite preview` of the production build, Chrome 14
 | Lab     | mobile      | 80          | 100           | 100            | 0     |
 | Lab     | desktop     | 100         | 100           | 100            | 0.006 |
 
-Mobile performance is limited by the 151 KB (gzip) main bundle on Lighthouse's simulated slow 4G connection and CPU slowdown. Lighthouse estimates mobile timings from a trace taken on the host, so the score moves with host load: a run earlier the same day, on the code before the credibility audit, gave 87 (Explore) and 89 (Lab). Only the default light theme is audited.
+Mobile performance is limited by the 151 KB (gzip) main bundle on Lighthouse's simulated slow 4G connection and CPU slowdown. Lighthouse estimates mobile timings from a trace taken on the host, so the score moves with host load: a run earlier the same day, on slightly older code, gave 87 (Explore) and 89 (Lab). Only the default light theme is tested.
 
 ### Bundle size
 
@@ -137,6 +151,14 @@ How each constant was chosen is stated as it happened: most were set by hand whi
 | `GRAPH_MIN`, `GRAPH_MAX`, `GRAPH_DENSITY`          | 5–30 nodes, 2–5 nearest neighbours                   | `src/core/graph/graph.ts`     | Graph size and how many nearest neighbours each node links to before the generator joins components.                                                                                                                                                                                             |
 | `WEIGHT_PER_UNIT`, `NODE_MARGIN`                   | 100, 0.02                                            | `src/core/graph/graph.ts`     | Edge weight is the distance in hundredths of the plot width, rounded to an integer so weights are easy to read. Nodes stay 2 % away from the plot edge.                                                                                                                                          |
 | `SORT_MIN`–`SORT_MAX`, values                      | 4–64 values from 1 to 999                            | `src/core/sort/input.ts`      | Limits for the array editor and for links. Hand-picked.                                                                                                                                                                                                                                          |
+
+## Visual design
+
+- Two themes from one token set in `src/index.css`: _Paper_ (warm off-white, ink, hairline rules) and _Scope_ (graphite). Tokens are RGB channels so Tailwind opacity modifiers work (`<alpha-value>` in `tailwind.config.ts`).
+- One signal colour (vermilion) marks the current cell, the active pseudocode line and the Run button. Algorithm states keep a fixed hue on every surface: amber frontier, steel expanded, green path, ink walls, hatched mud. Runs A and B are terracotta and cobalt everywhere.
+- IBM Plex Sans and Mono, self-hosted through `@fontsource`. Numbers use tabular mono figures.
+- Panels are separated by 1 px rules; radii are 2–6 px; only popovers have a shadow.
+- The mark and the 16 px icon set are drawn in-house (`src/ui/icons.tsx`, `scripts/make-images.mjs`).
 
 ## Accessibility
 
