@@ -6,6 +6,7 @@ import {
   GRAPH_DENSITY,
   GRAPH_MAX,
   GRAPH_MIN,
+  round3,
   type GraphInput,
 } from "./graph/graph";
 import { DEFAULT_GRID_PARAMS, HEURISTIC_WEIGHT } from "./grid/algorithms";
@@ -78,8 +79,6 @@ function unrle(text: string, length: number): Uint8Array | null {
   }
   return at === length ? out : null;
 }
-
-const round3 = (v: number) => Math.round(v * 1000) / 1000;
 
 export function toPlain(exp: Experiment, cursor = 0): Json {
   const base: Json = { f: exp.family, a: exp.a, b: exp.b, view: exp.view, cur: cursor };

@@ -23,10 +23,16 @@ export const GRAPH_MAX = 30;
 export const GRAPH_DENSITY: Range = { min: 2, max: 5, step: 1 };
 export const DEFAULT_GRAPH_DENSITY = 3;
 
+const WEIGHT_PER_UNIT = 100;
+const NODE_MARGIN = 0.02;
+
+export const clampNodeCoord = (v: number) =>
+  round3(Math.min(1 - NODE_MARGIN, Math.max(NODE_MARGIN, v)));
+
 export const round3 = (v: number) => Math.round(v * 1000) / 1000;
 
 export function edgeWeight(a: GraphNode, b: GraphNode): number {
-  return Math.max(1, Math.round(Math.hypot(a.x - b.x, a.y - b.y) * 100));
+  return Math.max(1, Math.round(Math.hypot(a.x - b.x, a.y - b.y) * WEIGHT_PER_UNIT));
 }
 
 export function makeGraph(n: number, seed: number, density = DEFAULT_GRAPH_DENSITY): GraphInput {
@@ -61,7 +67,7 @@ export function connectEdges(nodes: GraphNode[], density: number): [number, numb
     for (const o of near) add(i, o.j);
   }
   const parent = nodes.map((_, i) => i);
-  const find = (x: number): number => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+  const find = (x: number) => findRoot(parent, x);
   for (const [a, b] of set.values()) parent[find(a)] = find(b);
   for (;;) {
     const roots = new Set(nodes.map((_, i) => find(i)));
@@ -172,10 +178,7 @@ export function runGraph(input: GraphInput, algo: GraphAlgo): Trace<GraphEvent> 
     const order = sortedEdgeOrder(input);
     const parent = nodes.map((_, i) => i);
     const size = nodes.map(() => 1);
-    const find = (x: number) => {
-      while (parent[x] !== x) x = parent[x];
-      return x;
-    };
+    const find = (x: number) => findRoot(parent, x);
     tb.emit({ k: "done", op: "init", note: `Sort ${edges.length} edges by weight` });
     tb.endGroup(0);
     for (const e of order) {

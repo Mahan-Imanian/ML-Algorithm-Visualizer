@@ -39,6 +39,10 @@ export const GRADIENT_LIMITS: Record<keyof GradientParams, Range> = {
 export const REGRESSION_POINTS: Range = { min: 10, max: 200, step: 5 };
 export const DEFAULT_REGRESSION_POINTS = 60;
 
+const DIVERGED = { loss: 1e6, param: 1e4 };
+const NEAR_BEST_FRACTION = 0.01;
+const LOSS_FLOOR = 1e-4;
+
 export const REGRESSION_DATASETS: { id: RegressionData; label: string; hint: string }[] = [
   { id: "linear", label: "Clean line", hint: "A straight trend with light noise." },
   { id: "outliers", label: "With outliers", hint: "Four points far off the line pull the fit." },
@@ -145,7 +149,12 @@ export function runGradient(input: RegressionInput, params: GradientParams): Tra
     m -= params.lr * vm;
     b -= params.lr * vb;
     loss = lossAt(points, m, b);
-    if (!Number.isFinite(loss) || loss > 1e6 || Math.abs(m) > 1e4 || Math.abs(b) > 1e4) {
+    if (
+      !Number.isFinite(loss) ||
+      loss > DIVERGED.loss ||
+      Math.abs(m) > DIVERGED.param ||
+      Math.abs(b) > DIVERGED.param
+    ) {
       tb.emit({
         k: "diverged",
         op: "diverged",
@@ -165,7 +174,7 @@ export function runGradient(input: RegressionInput, params: GradientParams): Tra
       note: `Update: m = ${fx(m)}, b = ${fx(b)} · loss ${fx(loss)}`,
     });
     tb.endGroup(loss);
-    if (!near && loss - minLoss < 0.01 * Math.max(minLoss, 1e-4) + 1e-4) {
+    if (!near && loss - minLoss < NEAR_BEST_FRACTION * Math.max(minLoss, LOSS_FLOOR) + LOSS_FLOOR) {
       near = true;
       tb.checkpoint("Within 1% of best fit");
     }

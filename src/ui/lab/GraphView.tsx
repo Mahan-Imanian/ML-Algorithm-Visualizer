@@ -2,12 +2,12 @@ import { useRef, useState } from "react";
 import type { GraphExp, Run } from "@/core/experiment";
 import { addNode, removeEdge, removeNode, toggleEdge } from "@/core/graph/edit";
 import {
+  clampNodeCoord,
   EDGE_CANDIDATE,
   EDGE_REJECTED,
   EDGE_TREE,
   edgeWeight,
   findRoot,
-  round3,
   type GraphInput,
 } from "@/core/graph/graph";
 import { cn } from "@/lib/utils";
@@ -54,8 +54,8 @@ export function GraphView({
   const toUnit = (clientX: number, clientY: number) => {
     const rect = ref.current!.getBoundingClientRect();
     return {
-      x: round3(Math.min(0.98, Math.max(0.02, (clientX - rect.left - pad) / Math.max(1, W)))),
-      y: round3(Math.min(0.98, Math.max(0.02, (clientY - rect.top - pad) / Math.max(1, H)))),
+      x: clampNodeCoord((clientX - rect.left - pad) / Math.max(1, W)),
+      y: clampNodeCoord((clientY - rect.top - pad) / Math.max(1, H)),
     };
   };
 

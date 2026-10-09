@@ -6,7 +6,14 @@ import {
   type GridParams,
 } from "./grid/algorithms";
 import { gridMachine, type GridState } from "./grid/machine";
-import { fmtCell, hasWeights, type GridInput, type GridSize, type Heuristic } from "./grid/model";
+import {
+  fmtCell,
+  hasWeights,
+  round2,
+  type GridInput,
+  type GridSize,
+  type Heuristic,
+} from "./grid/model";
 import { makeGrid } from "./grid/terrain";
 import {
   graphMachine,
@@ -41,7 +48,7 @@ import {
   type KMeansParams,
   type KMeansState,
 } from "./learn/kmeans";
-import { Player } from "./player";
+import { KEYFRAME_INTERVAL, Player } from "./player";
 import {
   makeSearchInput,
   runSearch,
@@ -344,7 +351,7 @@ export function runVariant(exp: Experiment, which: "a" | "b"): Run | null {
           params: vv.params,
           input: exp.input,
           trace,
-          player: new Player(kmeansMachine, exp.input, trace.events, 8),
+          player: new Player(kmeansMachine, exp.input, trace.events, KEYFRAME_INTERVAL.kmeans),
         };
       } else {
         const vv = v as GradientExp["a"];
@@ -356,13 +363,13 @@ export function runVariant(exp: Experiment, which: "a" | "b"): Run | null {
           params: vv.params,
           input,
           trace,
-          player: new Player(gradientMachine, input, trace.events, 32),
+          player: new Player(gradientMachine, input, trace.events, KEYFRAME_INTERVAL.gradient),
         };
       }
   }
 }
 
-const r2 = (n: number) => Math.round(n * 100) / 100;
+const INERTIA_TIE_FRACTION = 0.02;
 
 export function metricsAt(run: Run, cursor: number): Metric[] {
   switch (run.family) {
@@ -372,7 +379,7 @@ export function metricsAt(run: Run, cursor: number): Metric[] {
         { label: "Expanded", value: s.expanded, better: "lower" },
         { label: "Frontier", value: s.frontier.length },
         { label: "Moves", value: s.outcome === "found" ? s.path.length - 1 : "—", better: "lower" },
-        { label: "Cost", value: s.outcome === "found" ? r2(s.pathCost) : "—", better: "lower" },
+        { label: "Cost", value: s.outcome === "found" ? round2(s.pathCost) : "—", better: "lower" },
       ];
     }
     case "sort": {
@@ -453,11 +460,11 @@ export function compareInsights(a: Run, b: Run, la: string, lb: string): string[
     const cb = sb.outcome === "found" ? sb.pathCost : null;
     if (ca === null && cb === null) out.push("Neither run reaches the target: it is walled off.");
     else if (ca !== null && cb !== null) {
-      if (Math.abs(ca - cb) < 1e-6) out.push(`Both find a path of cost ${r2(ca)}.`);
+      if (Math.abs(ca - cb) < 1e-6) out.push(`Both find a path of cost ${round2(ca)}.`);
       else {
         const cheaper = ca < cb ? la : lb;
         out.push(
-          `${cheaper} finds a cheaper path: ${r2(Math.min(ca, cb))} vs ${r2(Math.max(ca, cb))} (${pct(ca, cb)}% less).`,
+          `${cheaper} finds a cheaper path: ${round2(Math.min(ca, cb))} vs ${round2(Math.max(ca, cb))} (${pct(ca, cb)}% less).`,
         );
       }
     }
@@ -551,7 +558,7 @@ export function compareInsights(a: Run, b: Run, la: string, lb: string): string[
       `${ia <= ib ? la : lb} ends with lower inertia: ${Math.min(ia, ib).toFixed(3)} vs ${Math.max(ia, ib).toFixed(3)}.`,
     );
     out.push(`Iterations to converge: ${sa.iteration} vs ${sb.iteration}.`);
-    if (Math.abs(ia - ib) > 0.02 * Math.max(ia, ib))
+    if (Math.abs(ia - ib) > INERTIA_TIE_FRACTION * Math.max(ia, ib))
       out.push(
         "Different starting centroids led to different final clusterings: k-means only finds a local optimum.",
       );

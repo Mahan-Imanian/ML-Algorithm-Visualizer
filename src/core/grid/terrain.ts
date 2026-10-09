@@ -1,5 +1,20 @@
 import { mulberry32, shuffleInPlace } from "../rng";
-import { GRID_SIZES, neighbors, type GridInput, type GridSize, type Terrain } from "./model";
+import {
+  GRID_SIZES,
+  MUD_COST,
+  neighbors,
+  type GridInput,
+  type GridSize,
+  type Terrain,
+} from "./model";
+
+const SCATTER_WALL_FRACTION = 0.3;
+const SCATTER_ATTEMPTS = 40;
+const MUD_BANDS: [number, number][] = [
+  [0.45, 1],
+  [0.58, 3],
+  [0.7, 6],
+];
 
 export const TERRAINS: { id: Exclude<Terrain, "custom">; label: string; hint: string }[] = [
   { id: "open", label: "Open field", hint: "No obstacles. Shows each search's raw shape." },
@@ -8,7 +23,7 @@ export const TERRAINS: { id: Exclude<Terrain, "custom">; label: string; hint: st
   {
     id: "scatter",
     label: "Scatter",
-    hint: "Random obstacles at 30% density, always solvable.",
+    hint: `Random walls on ${SCATTER_WALL_FRACTION * 100}% of cells, redrawn until the target is reachable.`,
   },
   {
     id: "weighted",
@@ -44,10 +59,10 @@ export function makeGrid(
     start = mid * w;
     target = mid * w + (w - 1);
   } else if (terrain === "scatter") {
-    for (let attempt = 0; attempt < 40; attempt++) {
+    for (let attempt = 0; attempt < SCATTER_ATTEMPTS; attempt++) {
       const r2 = mulberry32(seed + attempt * 7919);
       cells.fill(1);
-      for (let i = 0; i < cells.length; i++) if (r2() < 0.3) cells[i] = 0;
+      for (let i = 0; i < cells.length; i++) if (r2() < SCATTER_WALL_FRACTION) cells[i] = 0;
       cells[start] = 1;
       cells[target] = 1;
       if (reachable({ w, h, cells, start, target, diagonal, terrain, seed, size })) break;
@@ -170,7 +185,7 @@ function paintNoise(cells: Uint8Array, w: number, h: number, rng: () => number) 
   for (let r = 0; r < h; r++) {
     for (let c = 0; c < w; c++) {
       const n = coarse(r, c) * 0.75 + fine(r, c) * 0.25;
-      cells[r * w + c] = n < 0.45 ? 1 : n < 0.58 ? 3 : n < 0.7 ? 6 : 9;
+      cells[r * w + c] = MUD_BANDS.find(([below]) => n < below)?.[1] ?? MUD_COST.max;
     }
   }
 }
