@@ -56,7 +56,7 @@ function WhichToggle({ which, set }: { which: "a" | "b"; set: (w: "a" | "b") => 
   );
 }
 
-export function InspectView() {
+function InspectView() {
   useCommitCounter("inspector");
   const [which, setWhich, hasB] = useWhich();
   const run = useLab((s) => (which === "b" && s.runB ? s.runB : s.runA));

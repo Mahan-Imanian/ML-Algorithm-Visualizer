@@ -47,7 +47,7 @@ Button.displayName = "Button";
 
 export const TooltipProvider = TooltipPrimitive.Provider;
 
-export function Tip({
+function Tip({
   label,
   keys,
   children,

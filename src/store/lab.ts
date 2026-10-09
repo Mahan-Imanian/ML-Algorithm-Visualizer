@@ -71,7 +71,7 @@ function build(exp: Experiment) {
   return { runA, runB };
 }
 
-export function lengthOf(run: Run | null): number {
+function lengthOf(run: Run | null): number {
   return run ? run.trace.events.length : 0;
 }
 

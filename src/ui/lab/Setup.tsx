@@ -587,7 +587,7 @@ function ToolsSection() {
   );
 }
 
-export function ParamsEditor({ which }: { which: "a" | "b" }) {
+function ParamsEditor({ which }: { which: "a" | "b" }) {
   const exp = useLab((s) => s.exp);
   const setParams = useLab((s) => s.setParams);
   const v = which === "a" ? exp.a : exp.b;

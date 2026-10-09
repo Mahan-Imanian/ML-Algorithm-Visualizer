@@ -38,8 +38,8 @@ import { SEARCH_MAX, SEARCH_MIN, type TargetMode } from "./search/search";
 import { SORT_MAX, SORT_MIN, SORT_VALUE_MAX, SORT_VALUE_MIN, type SortPreset } from "./sort/input";
 import type { Range } from "./types";
 
-export const FORMAT = "algoscope.experiment";
-export const VERSION = 3;
+const FORMAT = "algoscope.experiment";
+const VERSION = 3;
 
 type Json = Record<string, unknown>;
 
@@ -268,7 +268,7 @@ function view(raw: unknown): ViewSettings {
   return { values: v.values === true, overlay: v.overlay !== false };
 }
 
-export function fromPlain(raw: unknown): DecodeResult {
+function fromPlain(raw: unknown): DecodeResult {
   try {
     if (!isObj(raw)) throw new Invalid("not an object");
     if (typeof raw.v === "number" && raw.v > VERSION)

@@ -172,7 +172,7 @@ export type Run =
       player: Player<GradientStart, GradientEvent, GradientState>;
     };
 
-export function familyOfAlgo(id: AlgoId): Family {
+function familyOfAlgo(id: AlgoId): Family {
   return getAlgo(id).family;
 }
 
@@ -579,8 +579,4 @@ export function compareInsights(a: Run, b: Run, la: string, lb: string): string[
     return out;
   }
   return out;
-}
-
-export function runKey(run: Run): string {
-  return run.family;
 }

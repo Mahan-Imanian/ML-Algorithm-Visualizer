@@ -247,12 +247,12 @@ export interface GraphState {
   done: boolean;
 }
 
-export const EDGE_IDLE = 0;
+const EDGE_IDLE = 0;
 export const EDGE_CANDIDATE = 1;
 export const EDGE_TREE = 2;
 export const EDGE_REJECTED = 3;
 
-export function findRoot(uf: Int32Array, x: number): number {
+export function findRoot(uf: ArrayLike<number>, x: number): number {
   while (uf[x] !== x) x = uf[x];
   return x;
 }

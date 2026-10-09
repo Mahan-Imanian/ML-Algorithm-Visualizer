@@ -115,7 +115,7 @@ export function shortcutFor(
   return null;
 }
 
-export function runShortcut(action: ShortcutAction) {
+function runShortcut(action: ShortcutAction) {
   const lab = useLab.getState();
   const ui = useUI.getState();
   switch (action) {

@@ -376,7 +376,7 @@ function norm(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9*²\s]/g, " ");
 }
 
-export function scoreCommand(c: Command, query: string): number {
+function scoreCommand(c: Command, query: string): number {
   const q = norm(query).trim();
   if (!q) return 1;
   const label = norm(c.label);
