@@ -1,217 +1,132 @@
-# Audit and resolution
+# Audit history
 
-This document tracks every finding from the October 2026 audit of version 2.0.0 and how version 3.0.0 resolves it. A follow-up audit of 3.0.0 and its resolution in 3.1.0 comes first. A finding is marked **fixed** only after the original failure was reproduced and the corrected behaviour verified, in the running app or by a test that fails on the old behaviour.
+This file records each audit of Algoscope: what it found, what changed, and how the result was checked. Newest first.
 
-## 3.1.0 follow-up audit
+Figures for versions 2.0.0 and 3.0.0 come from one-off measurements taken during those audits with scripts that were not committed. They cannot be reproduced from this repository and are kept only as history. Measurements of the current code use the scripts described in [internals.md](internals.md#measurements).
 
-### What was still wrong in 3.0.0
+## Credibility audit (2026-10-09, unreleased)
 
-1. **The visualization moved when text changed.** The caption lived inside the stage's flex column and grew from 60 to 98 px as explanations wrapped. Pane-header metrics wrapped too. Each change resized the stage, fired the ResizeObserver, resized the canvas and re-centred the grid. Measured on the live 3.0.0 build, one BFS run produced 3 distinct canvas boxes, and a comparison produced 14 with the caption ranging from 118 to 194 px.
-2. **Rendering was tied to React.** Every cursor change re-rendered the stage tree. On the largest weighted comparison at 8×, p95 frame time was 233 ms.
-3. **Motion showed state, not cause.** Cells snapped between colours; nothing connected a dequeued cell to the neighbours it enqueued.
-4. **There was no way to present.** The lab chrome took more room than the visualization on a projector.
-5. **Graph editing was limited to moving nodes**, and a disconnected graph gave a silent, wrong-looking "tree".
-6. **Smaller defects:** a crash when switching runs from the palette, palette ranking (`BFS` found an experiment before the algorithm), end-of-run captions stopping on a sub-step, overlapping pointer labels, dark walls brighter than the search, and five accessibility failures Lighthouse could see (contrast 4.06:1 on the main action, empty list roles, heading order, no main landmark, name/label mismatches).
+This audit checked every number and verification claim in the README, `docs/` and the changelog against something that can be run from the repository, and looked for the same weaknesses in the code: unvalidated input, unexplained constants and dead code.
 
-### How 3.1.0 resolves it
+### Findings and changes
 
-| Finding            | Fix                                                                                                                                                                                                  | Evidence                                                                                                                                                                                                                                   |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Layout instability | Stage in fixed grid tracks (`minmax(0,1fr) 104px 28px 88px`) with `contain: strict`; fixed-height, clamped captions; single-line headers with fixed-width tabular readouts; stable scrollbar gutters | Canvas box sampled every frame for about 150 frames during playback: exactly 1 box per canvas for BFS, DFS, Dijkstra, A\*, greedy, all six sorts, three searches, Prim, Kruskal, k-means, gradient and compare. Caption constant at 104 px |
-| Smoothness         | Two clocks: canvases draw from the live cursor in rAF; panels follow a presented cursor throttled to 20 Hz during playback; time-based easing                                                        | Largest weighted comparison, Log open, 480 steps/s: median 16.7 ms, p95 17.0 ms, worst 17.2 ms, 0 % dropped, grid draw 0.54 ms average and 1.40 ms max                                                                                     |
-| Motion             | Discovery grows from the centre, enqueue edges draw in, expansion crossfades, the path traces back from the target, bars and pointers travel, frontier rows slide                                    | Visual QA of rendered frames                                                                                                                                                                                                               |
-| Presentation       | Full-screen mode with large type and toggleable panels                                                                                                                                               | Screenshot at 1920×1080; test for `P`, `C`, `Escape`                                                                                                                                                                                       |
-| Graph editing      | Connect, disconnect, add and delete nodes; forest detection                                                                                                                                          | Engine test: edits, re-indexing, 2 components, "Disconnected" milestone                                                                                                                                                                    |
-| Palette            | Exact alias match on an algorithm outranks a prefix match on anything else; navigation follows visual order                                                                                          | Test against the real command list: `BFS`, `bfs`, `Bfs`, `breadth`, `A*`, `astar`, …; UI test types `BFS` and presses Enter                                                                                                                |
-| Accessibility      | Contrast token for text on orange, roles, headings, landmark, names                                                                                                                                  | Lighthouse accessibility 91 → 100 on the Lab (light and dark, desktop and phone) and on Explore                                                                                                                                            |
+1. **Numbers that could not be reproduced.** Frame times, recording times, Lighthouse scores, heap size and contrast ratios were measured with scripts kept outside the repository. Added `npm run bench` (Vitest benchmarks for recording and seeking), `npm run perf` (frame times, canvas size stability, draw cost, render rate and third-party requests in headless Chrome), `npm run lighthouse` (Lighthouse 12.8.2), a contrast test that reads the colour tokens from `src/index.css`, and a test that recomputes the figures quoted in the README from the engine. Figures that none of these produce were removed. The ones kept were re-measured and are listed with date and environment.
+2. **Self-assigned scorecards.** Earlier versions of this file graded the project from 1 to 10 on 20 to 25 dimensions and averaged the grades. These were the author's opinions presented like measurements, and were removed.
+3. **Input handling.**
+   - A shared graph whose edges had all been removed came back with generated edges, because an empty edge list fell through to `connectEdges` (`src/core/share.ts`).
+   - Duplicate and reversed edges in a link were kept as separate edges.
+   - Grid run lengths accepted trailing characters, because `parseInt` stops at the first invalid one.
+   - An imported file with a missing or non-integer `version` was reported as "made by a newer version".
+   - Links accepted parameter values the editor cannot produce: 500 gradient steps, a learning rate of 3, 30 k-means points, 1 or 6 edges per node.
+   - Custom sort input accepted `0x10`, `1e2` and `0b11` and silently converted them.
+   - A saved-experiment entry with an unknown family crashed the saved list, and a stored library that was not an array crashed the app on load (`src/store/library.ts`).
+   - Importing a file or link at a saved step seeked 50 ms after navigating. When the lab chunk took longer to load, the import opened at step 0.
 
-Not verified: 120 and 144 Hz on real hardware (the test display is 60 Hz, so high refresh rates are covered only by per-frame work against the 8.3 and 6.9 ms budgets), and a real screen-reader session.
+   Each has a test that failed before the fix.
 
-### Scorecard, 25 dimensions
+4. **Constants without names or rationale.** Parameter ranges were written three times, in the editor sliders, the link decoder and the generators, and the three disagreed (gradient steps were 10–300 in the editor and 1–500 elsewhere). Each parameter now has one `Range` next to its algorithm. Playback rates, keyframe intervals, motion timing, layout heights, breakpoints and generator thresholds are named, and [internals.md](internals.md#tuning-constants) explains each one and how it was chosen.
+5. **Dead code.** `knip` found an unused function, an unused helper, three unused icons and about fifteen exports used only inside their own module. `scripts/make-images.mjs` imported `esbuild` without declaring it. Union-find, node clamping and rounding were implemented more than once in the graph family.
 
-| Dimension                  | 2.0.0   | 3.0.0   | 3.1.0   | What would raise it                                     |
-| -------------------------- | ------- | ------- | ------- | ------------------------------------------------------- |
-| Product concept            | 4       | 8       | 8       | Validation with students and teachers                   |
-| Differentiation            | 2       | 7.5     | 8       | A data-structures family                                |
-| Feature depth              | 2       | 7.5     | 8       | Bellman-Ford, topological sort, BST and heap operations |
-| UX                         | 3       | 7.5     | 8       | A usability study                                       |
-| UI hierarchy               | 4       | 7.5     | 8.5     |                                                         |
-| Visual identity            | 2       | 7.5     | 8       |                                                         |
-| Design system              | 4       | 8       | 8       | Published component documentation                       |
-| Interaction design         | 3       | 7.5     | 8       |                                                         |
-| Motion                     | 3       | 6       | 8       | Transitions between families                            |
-| Layout stability           | 3       | 4       | 9.5     |                                                         |
-| Rendering smoothness       | 4       | 5       | 9       | Confirmation on 120 and 144 Hz displays                 |
-| Performance                | 6       | 7       | 9       |                                                         |
-| Accessibility              | 2       | 7       | 8.5     | A screen-reader session                                 |
-| Responsive                 | 1       | 8       | 8.5     |                                                         |
-| Presentation readiness     | 1       | 4       | 8.5     | Speaker notes, a remote-friendly key map                |
-| Comparison                 | 1       | 7.5     | 8.5     |                                                         |
-| Educational content        | 3       | 7.5     | 8       | Exercises with checked answers                          |
-| Copy                       | 3       | 8       | 8.5     |                                                         |
-| Search and command palette | 1       | 7       | 9       |                                                         |
-| Code quality               | 5       | 8       | 8.5     |                                                         |
-| Architecture               | 6       | 8.5     | 9       |                                                         |
-| Testing and reliability    | 3       | 8       | 8.5     | Browser end-to-end tests in CI                          |
-| Security                   | 8       | 8.5     | 8.5     |                                                         |
-| Documentation              | 4       | 8       | 9       |                                                         |
-| Overall polish             | 3       | 7       | 8.5     |                                                         |
-| **Average**                | **3.2** | **7.2** | **8.5** |                                                         |
+### Left as is
 
-The 3.0.0 column is re-scored here with what the follow-up audit found: the layout instability and the 233 ms p95 lowered stability, smoothness, motion and polish below the figures given at release.
+- `src/ui/lab/Setup.tsx` (about 830 lines) and `src/ui/lab/GridCanvas.tsx` (about 790 lines) are long. Setup is a set of small per-family editors and GridCanvas is one drawing routine with its input handling; splitting either into more files would move code without removing any coupling.
+- Not verified: a screen-reader session, a high-refresh-rate display, a real phone.
 
-## Status of every finding (2.0.0 → 3.0.0)
+## 3.1.0 follow-up audit (of 3.0.0)
 
-| #   | Finding (2.0.0)                                                                                                      | Status           | Evidence                                                                                                                                                                                                                                                                |
-| --- | -------------------------------------------------------------------------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Gradient descent drew all points outside the canvas: data y ∈ [1, 2.9], plot y ∈ [0, 1]                              | **Fixed**        | Datasets are normalised to the unit square; the stage has axes, residuals and a loss surface. Test: _keeps every dataset inside the unit square_. Verified visually.                                                                                                    |
-| 2   | k-means always finished in 2 frames with identical inertia                                                           | **Fixed**        | Assign and update are separate steps; overlapping, uneven, moon and uniform datasets; k-means++, random, deliberately bad and hand-placed starts. Test: _alternates assign and update_ (more than 4 steps on overlap).                                                  |
-| 3   | k-means++ picked the point after the one where the cumulative weight crossed r                                       | **Fixed**        | `plusPlus` in `core/learn/kmeans.ts`. Test: _k-means++ picks the point where the cumulative weight crosses r_.                                                                                                                                                          |
-| 4   | Pseudocode highlighted wrong lines (Dijkstra, A\*, selection, quick) and never moved for ML; `Math.min` clamp hid it | **Fixed**        | Every event names a line anchor in `core/info.ts`; no clamp. Test: _pseudocode synchronisation_ runs all 18 algorithms on defaults and every scenario, checking each event's line exists and matches the operation. UI test checks the highlighted line after stepping. |
-| 5   | `bg-x/15`-style opacity classes on `var()` colours emitted no CSS                                                    | **Fixed**        | Tokens are RGB channels with `<alpha-value>` in `tailwind.config.ts`. Built CSS checked for opacity variants.                                                                                                                                                           |
-| 6   | Hidden inspector tab stayed `display:flex` and pushed content down                                                   | **Fixed**        | Inspector tabs carry no display utilities; UI test asserts exactly one tab panel is rendered.                                                                                                                                                                           |
-| 7   | Phone: target and tools off-screen, no scrolling, no touch, no inspector below 1024px                                | **Fixed**        | Purpose-built phone layout: portrait grid, pinned transport, inline Setup / Inspect / Log / About tabs, overlay comparison, pointer events. Measured at 320–430px: no horizontal overflow.                                                                              |
-| 8   | Default BFS took ~6 minutes; two events per cell; padding events                                                     | **Fixed**        | Pop and visit merged; padding removed; logical-step granularity; speed adapts so 1× finishes a run in about 12 s; checkpoints.                                                                                                                                          |
-| 9   | Global shortcuts hijacked sliders and buttons                                                                        | **Fixed**        | `shortcutFor` ignores composite widgets, text fields, activatable controls and the grid. Tests: _never steals keys…_.                                                                                                                                                   |
-| 10  | Slider thumbs had no accessible name                                                                                 | **Fixed**        | Names go on `Slider.Thumb`. UI test: _gives every slider an accessible name_.                                                                                                                                                                                           |
-| 11  | 680 grid cells were 680 tab stops; invalid `role="grid"`                                                             | **Fixed**        | The grid is one canvas with one tab stop, arrow-key cursor, Space/S/T editing and a polite live region describing the focused cell.                                                                                                                                     |
-| 12  | Status said "Press Run to record a trace" during sort and learn playback                                             | **Fixed**        | Status is replaced by the per-step explanation for every family.                                                                                                                                                                                                        |
-| 13  | Palette couldn't find "bfs"; its own placeholder matched nothing; no arrow keys                                      | **Fixed**        | Aliases, ranked search, combobox/listbox ARIA, arrow/Home/End/Enter. Tests: _command search_, _command palette_.                                                                                                                                                        |
-| 14  | Export omitted the grid and had no import                                                                            | **Fixed**        | Versioned format with validation; file import and pasted-link import. Tests: _imports exactly what it exports_, _round-trips every scenario_.                                                                                                                           |
-| 15  | Dijkstra/A\* labelled O(E log V) but scanned a set (O(V²))                                                           | **Fixed**        | `core/heap.ts` binary heap with lazy deletion; stale entries are shown in the inspector.                                                                                                                                                                                |
-| 16  | README claimed WCAG AA, used a static test badge, cited a missing branch                                             | **Fixed**        | Rewritten README and changelog with no unverifiable claims.                                                                                                                                                                                                             |
-| 17  | No data-structure view                                                                                               | **Fixed**        | Algorithm-specific inspectors for every family.                                                                                                                                                                                                                         |
-| 18  | No comparison, presets, mazes, draggable endpoints or sharing                                                        | **Fixed**        | All implemented; see the README.                                                                                                                                                                                                                                        |
-| 19  | Whole-store subscriptions and an unvirtualised event log                                                             | **Fixed**        | Selector subscriptions; the log shows a ±30 window that follows the cursor.                                                                                                                                                                                             |
-| 20  | Every scrub re-folded the trace from event 0                                                                         | **Fixed**        | `core/player.ts` keyframe cache. 38,640-event trace: random seek 0.33 ms.                                                                                                                                                                                               |
-| 21  | Unused dependencies, dead exports, Google Fonts request                                                              | **Fixed**        | `lucide-react` and `sonner` removed; every Radix package in use; fonts self-hosted.                                                                                                                                                                                     |
-| 22  | Visual identity was a default violet SaaS template                                                                   | **Fixed**        | See _Design decisions_.                                                                                                                                                                                                                                                 |
-| 23  | Repo name promises ML; ML was the weakest part                                                                       | **Repositioned** | The product is an algorithm lab; learning is one of five families and works properly. The repository name is unchanged because renaming it would break the Pages URL.                                                                                                   |
+### What was wrong in 3.0.0
+
+1. **The visualization moved when text changed.** The caption sat inside the stage's flex column and grew as explanations wrapped, and pane-header metrics wrapped too. Each change resized the stage, fired the ResizeObserver, resized the canvas and re-centred the grid. On the 3.0.0 build, one BFS run produced 3 distinct canvas sizes and a comparison produced 14.
+2. **Rendering was tied to React.** Every cursor change re-rendered the stage tree. On the largest weighted comparison at 8×, the 95th-percentile frame time was 233 ms.
+3. **Motion showed state but not cause.** Cells snapped between colours, and nothing connected a dequeued cell to the neighbours it enqueued.
+4. **There was no presentation layout.** On a projector, the lab chrome took more room than the visualization.
+5. **Graph editing was limited to moving nodes**, and a disconnected graph produced a tree with no warning.
+6. **Smaller defects:** a crash when switching runs from the palette, palette ranking (`BFS` matched an experiment before the algorithm), end-of-run captions stopping on a sub-step, overlapping pointer labels, dark-theme walls brighter than the search, and five accessibility failures reported by Lighthouse (contrast 4.06:1 on the main action, empty list roles, heading order, no main landmark, name/label mismatches).
+
+### Changes in 3.1.0
+
+| Finding            | Change                                                                                                                                                             | How it is checked now                                                                                                            |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Layout instability | Stage in fixed grid tracks with `contain: strict`; fixed-height, clamped captions; single-line headers with fixed-width tabular readouts; stable scrollbar gutters | `npm run perf` samples every canvas's box on every frame and reports how many distinct boxes each run produced                   |
+| Smoothness         | Two clocks: canvases draw from the live cursor in rAF; panels follow a presented cursor throttled to 20 Hz during playback; time-based easing                      | `npm run perf` frame intervals, draw cost and React renders per second                                                           |
+| Motion             | Discovery grows from the centre, enqueue edges draw in, expansion crossfades, the path traces back from the target, bars and pointers travel, frontier rows slide  | Visual review only                                                                                                               |
+| Presentation       | Full-screen mode with large type and toggleable panels                                                                                                             | UI test for `P`, `C`, `S`, `E`, `M` and `Escape`                                                                                 |
+| Graph editing      | Connect, disconnect, add and delete nodes; forest detection                                                                                                        | Engine tests for edits, re-indexing, two components and the "Disconnected" milestone                                             |
+| Palette            | An exact alias match on an algorithm outranks a prefix match on anything else; arrow keys follow the visual order                                                  | Tests against the real command list (`BFS`, `bfs`, `breadth`, `A*`, `astar`, …) and a UI test that types `BFS` and presses Enter |
+| Accessibility      | Contrast token for text on orange, roles, headings, landmark, names                                                                                                | `npm run lighthouse`; `src/ui/__tests__/contrast.test.ts` checks the text and focus tokens in both themes                        |
+
+## 2.0.0 → 3.0.0 audit
+
+| #   | Finding in 2.0.0                                                                                                     | Status       | Evidence                                                                                                                                                             |
+| --- | -------------------------------------------------------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Gradient descent drew all points outside the canvas: data y ∈ [1, 2.9], plot y ∈ [0, 1]                              | Fixed        | Datasets are normalised to the unit square. Test: _keeps every dataset inside the unit square_.                                                                      |
+| 2   | k-means always finished in 2 frames with identical inertia                                                           | Fixed        | Assign and update are separate steps; more datasets and initialisations. Test: _alternates assign and update_.                                                       |
+| 3   | k-means++ picked the point after the one where the cumulative weight crossed r                                       | Fixed        | `plusPlus` in `core/learn/kmeans.ts`. Test: _k-means++ picks the point where the cumulative weight crosses r_.                                                       |
+| 4   | Pseudocode highlighted wrong lines (Dijkstra, A\*, selection, quick) and never moved for ML; `Math.min` clamp hid it | Fixed        | Every event names a line anchor in `core/info.ts`; no clamp. The pseudocode test runs all 18 algorithms and every scenario and checks each event's line.             |
+| 5   | `bg-x/15`-style opacity classes on `var()` colours emitted no CSS                                                    | Fixed        | Tokens are RGB channels with `<alpha-value>` in `tailwind.config.ts`.                                                                                                |
+| 6   | Hidden inspector tab stayed `display:flex` and pushed content down                                                   | Fixed        | UI test asserts exactly one tab panel is rendered.                                                                                                                   |
+| 7   | Phone: target and tools off-screen, no scrolling, no touch, no inspector below 1024px                                | Fixed        | Separate phone layout with pointer events. Checked by hand at 320–430 px during the audit; no script.                                                                |
+| 8   | Default BFS took about 6 minutes; two events per cell; padding events                                                | Fixed        | Pop and visit merged, padding removed, logical-step playback, and a rate that targets about 12 s per run at 1× (test: _plays a mid-sized run in 12 s_).              |
+| 9   | Global shortcuts hijacked sliders and buttons                                                                        | Fixed        | `shortcutFor` ignores composite widgets, text fields, activatable controls and the grid. Tests: _never steals keys…_.                                                |
+| 10  | Slider thumbs had no accessible name                                                                                 | Fixed        | UI test: _gives every slider an accessible name_.                                                                                                                    |
+| 11  | 680 grid cells were 680 tab stops; invalid `role="grid"`                                                             | Fixed        | The grid is one canvas with one tab stop, an arrow-key cursor, Space/S/T editing and a polite live region describing the focused cell.                               |
+| 12  | Status said "Press Run to record a trace" during sort and learn playback                                             | Fixed        | The status line is replaced by the per-step explanation for every family.                                                                                            |
+| 13  | Palette couldn't find "bfs"; its own placeholder matched nothing; no arrow keys                                      | Fixed        | Aliases, ranked search, combobox/listbox ARIA, arrow/Home/End/Enter. Tests: _command search_, _command palette_.                                                     |
+| 14  | Export omitted the grid and had no import                                                                            | Fixed        | Versioned format with validation; file and pasted-link import. Tests: _imports exactly what it exports_, _round-trips every scenario_, and the malformed-link tests. |
+| 15  | Dijkstra/A\* labelled O(E log V) but scanned a set (O(V²))                                                           | Fixed        | `core/heap.ts` binary heap with lazy deletion; stale entries are shown in the inspector.                                                                             |
+| 16  | README claimed WCAG AA, used a static test badge, cited a missing branch                                             | Fixed        | README rewritten. (The 2026-10-09 audit found that later README versions again made claims without a script behind them.)                                            |
+| 17  | No data-structure view                                                                                               | Fixed        | Algorithm-specific inspectors for every family.                                                                                                                      |
+| 18  | No comparison, presets, mazes, draggable endpoints or sharing                                                        | Fixed        | All implemented; see the README.                                                                                                                                     |
+| 19  | Whole-store subscriptions and an unvirtualised event log                                                             | Fixed        | Selector subscriptions; the log shows 30 operations either side of the cursor.                                                                                       |
+| 20  | Every scrub re-folded the trace from event 0                                                                         | Fixed        | `core/player.ts` keyframe cache. `npm run bench` times random seeks.                                                                                                 |
+| 21  | Unused dependencies, dead exports, Google Fonts request                                                              | Fixed        | `lucide-react` and `sonner` removed; fonts self-hosted. `npm run perf` reports any request to another origin.                                                        |
+| 22  | Visual identity was a default violet template                                                                        | Fixed        | See _Visual design_ below.                                                                                                                                           |
+| 23  | Repository name promises ML; ML was the weakest part                                                                 | Repositioned | The app is an algorithm lab with learning as one of five families. The repository keeps its name because renaming it would change the Pages URL.                     |
 
 ### Found and fixed during the rebuild
 
-- Weighted A\* on the "rooms" terrain never produced a worse path, so that scenario showed nothing. Moved to weighted terrain and covered by a scenario-claim test.
-- "Weights change the answer" used a seed where BFS and Dijkstra tie. New seeds give BFS a path 3× (desktop) and 2× (phone) more expensive; tested.
+- Weighted A\* on the "rooms" terrain never produced a worse path, so that scenario showed nothing. Moved to weighted terrain and covered by a scenario test.
+- "Weights change the answer" used a seed where BFS and Dijkstra tie. The new seeds make BFS's path more expensive; tested.
 - The binary-search scenario claimed 7 probes for 128 values; the correct bound is 8. Title fixed and tested.
-- Graph share links were lossy because node positions were rounded on export. Positions are now rounded at creation, so links reproduce exactly; tested.
+- Graph share links were lossy because node positions were rounded on export. Positions are now rounded when created, so links reproduce exactly; tested.
 - Thumbnails crashed where `IntersectionObserver` is missing. Guarded.
-- The pseudocode highlight bar went stale after resize, and measuring it forced a synchronous page layout on every step. Replaced with row styling.
-- The canvas palette called `getComputedStyle().getPropertyValue` per fill, forcing style recalculation. Values are cached per theme.
-- Weighted terrain redrew its hatching on every frame. The static terrain is now pre-rendered once per input, size and theme.
-- Compare on a 320px phone shrank each grid to about 25px tall. Phones now get a single overlaid grid.
+- The pseudocode highlight bar forced a synchronous layout on every step. Replaced with row styling.
+- The canvas palette called `getComputedStyle().getPropertyValue` per fill. Values are cached per theme.
+- Weighted terrain redrew its hatching on every frame. The static terrain is pre-rendered once per input, size and theme.
+- Compare on a 320 px phone shrank each grid to about 25 px tall. Phones get a single overlaid grid.
 
-## Scorecard
+### Product decisions made in 3.0.0
 
-| Area               | 2.0.0   | 3.0.0   | Why it isn't higher                                                                                                               |
-| ------------------ | ------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Product concept    | 4       | 8       | Not yet validated with real students or teachers                                                                                  |
-| Differentiation    | 2       | 7.5     | Data-structure views, comparison verdicts and share links are rare in this category, but graph editing is limited to moving nodes |
-| Feature depth      | 2       | 7.5     | No data-structure family (heaps, BSTs, hash tables) and no topological sort or Bellman-Ford                                       |
-| UX                 | 3       | 7.5     | Tour and explanations exist; no usability study                                                                                   |
-| UI                 | 4       | 8       |                                                                                                                                   |
-| Visual identity    | 2       | 7.5     |                                                                                                                                   |
-| Design system      | 4       | 8       | Tokens, type scale, radii, motion and focus are defined; no published component docs                                              |
-| Interaction design | 3       | 7.5     |                                                                                                                                   |
-| Motion             | 3       | 7       | Bar travel, cell flashes, path draw-on and centroid glide; no animated transitions between families                               |
-| Accessibility      | 2       | 7       | Keyboard paths, names, live regions and reduced motion are tested; no screen-reader session with NVDA or VoiceOver                |
-| Responsive         | 1       | 8       |                                                                                                                                   |
-| Performance        | 6       | 7.5     | Large grids in compare mode drop below 60 fps at the highest speeds                                                               |
-| Code quality       | 5       | 8       |                                                                                                                                   |
-| Architecture       | 6       | 8.5     |                                                                                                                                   |
-| Reliability        | 3       | 8       | No browser end-to-end tests in CI                                                                                                 |
-| Security           | 8       | 8.5     |                                                                                                                                   |
-| Documentation      | 4       | 8       |                                                                                                                                   |
-| Onboarding         | 1       | 7.5     |                                                                                                                                   |
-| Content and copy   | 3       | 8       |                                                                                                                                   |
-| Overall polish     | 3       | 7.5     |                                                                                                                                   |
-| **Overall**        | **3.3** | **7.8** |                                                                                                                                   |
+1. The app is an algorithm lab for CS students rather than an "ML visualizer". What it adds over a plain animation is the visible data structure and the reason for each step.
+2. Every algorithm opens with a prepared input and a recorded run at step 0, so there is never an empty screen.
+3. The default playback unit is a logical step (one expansion, pass, partition or iteration); single operations are one key away.
+4. A comparison runs two algorithms on one input and states the difference in numbers.
+5. The URL encodes the experiment; files and the saved library use the same format.
+6. The learning family stays, limited to cases that show a failure mode: a bad start, non-round clusters, too high a learning rate, momentum.
+7. Phones get their own layout.
 
-7.8 is a credible, coherent product. Reaching 9 needs evidence this audit can't produce from inside the repository: sessions with students, a screen-reader pass, cross-browser end-to-end tests, and one more family (data structures) to round out a course's worth of content.
+### Visual design
 
-## Major product decisions
+- Two themes from one token set: _Paper_ (warm off-white, ink, hairline rules) and _Scope_ (graphite).
+- One signal colour (vermilion) marks the current cell, the active pseudocode line and the Run button. Algorithm states keep a fixed hue on every surface: amber frontier, steel expanded, green path, ink walls, hatched mud. Runs A and B are terracotta and cobalt everywhere.
+- IBM Plex Sans and Mono, self-hosted. Numbers use tabular mono figures.
+- Panels are separated by 1 px rules; radii are 2–6 px; only popovers have a shadow.
+- A custom mark and a 16 px icon set replaced lucide.
+- Motion follows what the algorithm changed: cells flash when changed, the path draws in, bars travel when swapped, values move from the merge buffer back into the array, centroids glide to their new means. Reduced motion is respected and can be forced in Settings.
 
-1. **Positioning:** an algorithm lab for CS students, not an "ML visualizer". The differentiator is the visible data structure and the reason behind each step.
-2. **Never an empty screen.** Every algorithm opens with a prepared input and a run already recorded, at step 0. "Run" is just play.
-3. **Steps, not frames.** The default unit is a logical step (one expansion, pass, partition or iteration); single operations are one key away.
-4. **Compare means a verdict.** Two runs share one input, and the app states the difference in numbers.
-5. **The URL is the experiment.** Every change updates a shareable link; files and the library use the same format.
-6. **Learning stays, but only as real experiments**: a bad start, non-round clusters, too-high learning rate, momentum. Each one demonstrates a failure mode a student should see.
-7. **Phones get their own layout**, not a squeezed desktop.
+### Rebuilt in 3.0.0
 
-## Design decisions
+The learning family, the grid renderer (canvas with a cached terrain layer, a keyboard cursor and pointer editing), the inspector, the transport and scheduler, the command palette, the experiment model and share format, the layout, the visual identity and the README.
 
-- **Two themes from one token set.** _Paper_ (warm off-white, ink, hairline rules) for projectors and daylight; _Scope_ (graphite) for the dark.
-- **One signal colour** (vermilion) means "now": the current cell, the active pseudocode line, the Run button. Algorithm states each have a fixed hue on every surface: amber frontier, steel expanded, green path, ink walls, hatched mud. A and B are terracotta and cobalt everywhere.
-- **IBM Plex Sans and Mono**, self-hosted. Numbers are tabular mono readouts.
-- **Rules, not cards.** Panels are separated by 1px lines; radii are 2–6px; the only shadow is on popovers.
-- **A custom mark** (a scope reticle with a stepped path) and a 16px custom icon set replace lucide.
-- **Motion explains causality:** cells flash when the algorithm changes them, the path draws itself in, bars travel when swapped, values move from the merge buffer back into the array, centroids glide to their new means, and the active code row eases between lines. All of it respects reduced motion, which can also be forced on in Settings.
+Kept from 2.0.0: the framework-free core with event traces, seeded randomness, Zustand, Radix dialog, tabs and slider, strict TypeScript, Vitest, CI and the Pages deploy, and reduced-motion support.
 
-## Rebuilt rather than patched
+### Checks at the 3.0.0 release
 
-The learning family; the grid renderer (canvas with a cached terrain layer, a keyboard cursor and pointer editing); the inspector; the transport and scheduler; the command palette; the experiment model and share format; the layout system; the visual identity; the README.
+These were done once for 3.0.0. Only the automated ones can be repeated.
 
-## Kept and improved
+- Automated: 92 tests at the time, covering algorithm correctness, pseudocode lines and scenario claims, player random access, share and file round-trips including damaged input, shortcut conflicts, command search, layout and routing, and UI journeys.
+- By hand in a browser: every family run, stepped and scrubbed; pointer drawing and dragging; compare in all families; manual k-means placement; gradient divergence; palette queries; both themes; the phone layout.
+- By hand at 320, 375, 390, 430, 768, 1024, 1280, 1440 and 1920 px: no horizontal overflow, and controls at least 24 px except inline links and slider thumbs (which have an extended hit area).
+- Not done: a screen-reader session.
 
-The framework-free core with event traces, seeded randomness, Zustand, Radix dialog, tabs and slider, TypeScript strict, Vitest, CI and Pages deploy, and reduced-motion support.
-
-## QA results
-
-**Automated:** 92 tests covering:
-
-- algorithm correctness for every family
-- pseudocode synchronisation and scenario claims
-- player random access
-- share and file round-trips, plus damaged links and invalid files
-- shortcut conflicts and command search
-- layout and routing
-- UI journeys: first visit, tour start, stepping with the code highlight, slider names, inspector panels, compare verdict, shared link at a step, broken link, palette keyboard navigation
-
-**Manual (in a browser):**
-
-- every family run, stepped and scrubbed
-- target dragged and walls drawn by pointer
-- compare in all families
-- k-means manual placement and the corner start
-- gradient divergence
-- command palette queries
-- light and dark themes
-- phone layout
-
-**Responsive:** measured at 320, 375, 390, 430, 768, 1024, 1280, 1440 and 1920px on Explore, a single-run lab, a comparison and Saved.
-
-- No horizontal overflow at any width.
-- Controls are at least 24px, except inline text links (exempt under WCAG 2.5.8) and slider thumbs, which carry an extended hit area.
-
-**Accessibility:**
-
-- one tab stop per widget
-- skip link
-- named controls
-- radiogroup and toolbar semantics
-- combobox and listbox palette
-- live regions that stay quiet during playback
-- reduced motion
-- single-key shortcuts can be disabled
-- contrast of secondary text at least 4.5:1 in both themes
-
-Not verified: a real screen-reader session.
-
-## Performance (production build)
-
-| Measure                                          | Result                                                             |
-| ------------------------------------------------ | ------------------------------------------------------------------ |
-| Initial JS                                       | 440 KB (144 KB gzip); the lab loads separately (86 KB, 29 KB gzip) |
-| Third-party requests                             | none                                                               |
-| Trace build, largest grid (61×37)                | 1.5–7 ms                                                           |
-| Random seek, largest grid                        | ≤ 3.5 ms; 0.33 ms on a 200×120 stress trace with 38,640 events     |
-| Playback at 8×, medium grid, two runs            | 56 fps                                                             |
-| Playback at 8×, sorting, k-means, gradient       | 60 fps                                                             |
-| Playback at 8×, largest grid, two runs, weighted | 16.7 ms median frame; p95 233 ms                                   |
-| JS heap during playback                          | 14–15 MB                                                           |
-
-The large-grid figures come from a Chrome instance driven by DevTools with the accessibility tree enabled, which makes DOM text updates unusually expensive; ordinary sessions should do better. Profiling found three bottlenecks, which were removed:
-
-- forced layout on every step from the code highlight
-- style recalculation from palette reads
-- per-frame terrain hatching
+One-off performance figures for the 3.0.0 production build, from a Chrome instance driven over DevTools with the accessibility tree enabled: initial JS 440 KB (144 KB gzip), lab chunk 86 KB (29 KB gzip), 56 fps at 8× on a medium two-run grid, and a 233 ms 95th-percentile frame on the largest weighted comparison. Profiling then found three causes, all removed in 3.0.0 or 3.1.0: a forced layout on every step from the code highlight, style recalculation from palette reads, and per-frame terrain hatching.
