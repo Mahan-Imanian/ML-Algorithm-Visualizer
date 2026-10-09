@@ -1,7 +1,7 @@
 import { Component, lazy, Suspense, useEffect, type ReactNode } from "react";
 import { parseHash, useHash } from "@/lib/router";
 import { useLayout } from "@/lib/layout";
-import { useSettings } from "@/store/settings";
+import { isDarkTheme, useSettings } from "@/store/settings";
 import { useUI } from "@/store/ui";
 import { CommandPalette } from "./CommandPalette";
 import { ImportDialog, SaveDialog, SettingsDialog, ShareDialog, ShortcutsDialog } from "./Dialogs";
@@ -21,7 +21,7 @@ function useThemeSync() {
   useEffect(() => {
     const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
     const apply = () => {
-      const dark = theme === "dark" || (theme === "system" && !!mq?.matches);
+      const dark = isDarkTheme(theme);
       document.documentElement.dataset.theme = dark ? "dark" : "light";
       document
         .querySelector('meta[name="theme-color"]')

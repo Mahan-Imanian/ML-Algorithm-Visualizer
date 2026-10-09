@@ -349,10 +349,7 @@ export function buildCommands(): Command[] {
       label: "Toggle light and dark",
       group: "View",
       keywords: "theme dark mode light mode",
-      run: () => {
-        const dark = document.documentElement.dataset.theme === "dark";
-        useSettings.getState().set({ theme: dark ? "light" : "dark" });
-      },
+      run: () => useSettings.getState().toggleTheme(),
     },
     {
       id: "tour",
