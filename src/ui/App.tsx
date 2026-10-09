@@ -81,7 +81,7 @@ export default function App() {
 
   useEffect(() => {
     const titles = {
-      explore: "Algoscope · step through algorithms and see why they decide",
+      explore: "Algoscope · step through algorithms beside their data structures",
       lab: "Lab · Algoscope",
       saved: "Saved experiments · Algoscope",
     };
