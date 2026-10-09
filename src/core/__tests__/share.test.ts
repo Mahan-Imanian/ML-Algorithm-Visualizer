@@ -121,5 +121,11 @@ describe("custom sort input", () => {
     expect(parseCustomValues("1 2")).toEqual({ error: "Enter at least 4 numbers." });
     expect(parseCustomValues("1 2 3 x")).toEqual({ error: '"x" is not a whole number.' });
     expect(parseCustomValues("1 2 3 0")).toEqual({ error: "Use whole numbers from 1 to 999." });
+    for (const bad of ["0x10", "1e2", "0b11", "NaN", "Infinity"])
+      expect(parseCustomValues(`1 2 3 ${bad}`)).toEqual({
+        error: `"${bad}" is not a whole number.`,
+      });
+    expect(parseCustomValues("")).toEqual({ error: "Enter at least 4 numbers." });
+    expect(parseCustomValues("7 7 7 7")).toEqual({ values: [7, 7, 7, 7] });
   });
 });
