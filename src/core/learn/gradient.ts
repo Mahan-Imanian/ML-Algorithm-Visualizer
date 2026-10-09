@@ -34,7 +34,7 @@ export const REGRESSION_DATASETS: { id: RegressionData; label: string; hint: str
   {
     id: "valley",
     label: "Narrow valley",
-    hint: "x is far from 0, so m and b fight each other. Plain descent zig-zags.",
+    hint: "x is far from 0, so the m and b gradients are strongly coupled. Plain descent zig-zags.",
   },
 ];
 

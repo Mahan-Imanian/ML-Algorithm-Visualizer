@@ -19,7 +19,11 @@ export const TARGET_MODES: { id: TargetMode; label: string; hint: string }[] = [
   { id: "first", label: "First element", hint: "Best case for linear search." },
   { id: "middle", label: "Middle element", hint: "Best case for binary search." },
   { id: "last", label: "Last element", hint: "Worst case for linear search." },
-  { id: "absent", label: "Not present", hint: "Every algorithm must prove a negative." },
+  {
+    id: "absent",
+    label: "Not present",
+    hint: "Each algorithm has to rule out every possible position.",
+  },
   { id: "random", label: "Random element", hint: "A typical lookup." },
 ];
 
