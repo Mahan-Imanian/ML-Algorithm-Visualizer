@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { metricsAt, variantLabel } from "@/core/experiment";
 import { familyName, getAlgo } from "@/core/info";
+import { useIsCompact } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 import { useLab } from "@/store/lab";
 import { useUI, type PresentPanel } from "@/store/ui";
@@ -55,7 +56,8 @@ export function Present() {
   const togglePanel = useUI((s) => s.togglePanel);
   const presented = usePresented();
   const info = getAlgo(exp.a.algo);
-  const side = panels.code || panels.state;
+  const compact = useIsCompact();
+  const side = !compact && (panels.code || panels.state);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -68,7 +70,7 @@ export function Present() {
     <div
       className="fixed inset-0 z-40 grid bg-field"
       style={{
-        gridTemplateRows: `64px minmax(0,1fr) ${panels.explain ? "132px" : "0px"} 104px`,
+        gridTemplateRows: `64px minmax(0,1fr) ${panels.explain ? "132px" : "0px"} ${compact ? "148px" : "104px"}`,
       }}
       role="region"
       aria-label="Presentation"
@@ -95,7 +97,7 @@ export function Present() {
           </div>
         )}
         <div className={cn("flex shrink-0 items-center gap-1", !panels.metrics && "ml-auto")}>
-          {TOGGLES.map((t) => (
+          {(compact ? TOGGLES.filter((t) => t.id === "explain") : TOGGLES).map((t) => (
             <button
               key={t.id}
               aria-pressed={panels[t.id]}
@@ -155,7 +157,7 @@ export function Present() {
         )}
       </div>
       <div className="min-h-0 overflow-hidden">{panels.explain && <NowCaption large />}</div>
-      <Transport present />
+      <Transport present={!compact} compact={compact} />
       {runB && <span className="sr-only">Comparing two runs.</span>}
     </div>
   );
