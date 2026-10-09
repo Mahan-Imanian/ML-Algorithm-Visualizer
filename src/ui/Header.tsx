@@ -2,7 +2,7 @@ import { FAMILIES, algosOf, familyName, getAlgo, type AlgoId } from "@/core/info
 import { useLayout } from "@/lib/layout";
 import { cn, isMac } from "@/lib/utils";
 import { useLab } from "@/store/lab";
-import { useSettings } from "@/store/settings";
+import { isDarkTheme, useSettings } from "@/store/settings";
 import { useUI } from "@/store/ui";
 import { exportExperiment } from "./commands";
 import {
@@ -105,10 +105,10 @@ export function Header({ route }: { route: "explore" | "lab" | "saved" }) {
   const hasB = useLab((s) => !!s.exp.b);
   const setB = useLab((s) => s.setVariantB);
   const theme = useSettings((s) => s.theme);
-  const setSettings = useSettings((s) => s.set);
+  const toggleTheme = useSettings((s) => s.toggleTheme);
   const isLab = route === "lab";
   const narrow = layout === "narrow";
-  const dark = typeof document !== "undefined" && document.documentElement.dataset.theme === "dark";
+  const dark = isDarkTheme(theme);
 
   const toggleCompare = () => {
     const s = useLab.getState();
@@ -250,7 +250,7 @@ export function Header({ route }: { route: "explore" | "lab" | "saved" }) {
               <Upload /> Import experiment
             </MenuItem>
             <MenuSeparator />
-            <MenuItem onSelect={() => setSettings({ theme: dark ? "light" : "dark" })}>
+            <MenuItem onSelect={toggleTheme}>
               {dark ? <Sun /> : <Moon />} {dark ? "Paper theme" : "Scope theme"}
               {theme === "system" && <span className="ml-auto text-2xs text-ink-3">system</span>}
             </MenuItem>
