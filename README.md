@@ -90,7 +90,7 @@ Each algorithm has an About panel with complexity, guarantees, the state it keep
 
 ## How it works
 
-A run is a recording, not an animation. Each algorithm (`runGrid`, `runSort` and so on in `src/core/`) writes a typed event trace through a `TraceBuilder`, and every event names the pseudocode line it belongs to. A `Player` folds those events into state with the family's machine and caches keyframes, so the scrubber can jump to any step without replaying from the start.
+Each run is recorded in full before it is played. Each algorithm (`runGrid`, `runSort` and so on in `src/core/`) writes a typed event trace through a `TraceBuilder`, and every event names the pseudocode line it belongs to. A `Player` folds those events into state with the family's machine and caches keyframes, so the scrubber can jump to any step without replaying from the start.
 
 ```mermaid
 flowchart LR
@@ -101,7 +101,14 @@ flowchart LR
   P --> X["Code, state and caption panels, up to 20 Hz"]
 ```
 
-`src/core/` has no React and no DOM. Canvases draw from the live cursor in `requestAnimationFrame`; text panels follow a cursor throttled to 20 Hz during playback, so React never renders per frame. Source layout, rendering details, performance and accessibility notes, the keyboard map and how to add an algorithm are in [docs/internals.md](docs/internals.md).
+`src/core/` has no React and no DOM. Canvases draw from the live cursor in `requestAnimationFrame`; text panels follow a cursor throttled to 20 Hz during playback, so React never renders per frame. Source layout, rendering details, how the figures in this README were measured, the tuning constants, the keyboard map and how to add an algorithm are in [docs/internals.md](docs/internals.md).
+
+### Design decisions
+
+- **Record first, then play back.** Each run is computed to completion before playback starts, which is what makes backward scrubbing, jumping to any step, aligning two runs on one timeline and testing every event possible. The cost is that input size is capped (61×37 grids, 64 values to sort, 400 points) so that recording stays fast, every input edit records the run again, and each family needs a state machine that replays its events next to the algorithm itself.
+- **A core without React or the DOM.** Algorithms, traces, the player, scenarios and the share format live in `src/core/`. Tests run them in Node, and the image and performance scripts bundle them with esbuild. The price is a translation layer (`explain.ts`, the state panels) between events and what the UI shows.
+- **Canvas for the visualization, React for text, panels at 20 Hz.** A 61×37 grid has 2,257 cells, and a comparison shows two of them. Drawing them on a canvas usually takes a few milliseconds per frame ([measurements](docs/internals.md#measurements)); re-rendering the React stage on every cursor change was the main cause of dropped frames in 3.0.0. Text panels are capped at 20 updates a second during playback, since text changing faster than that cannot be read anyway, so they can lag the canvas by up to 50 ms while playing and catch up as soon as playback pauses. 20 Hz is a round figure, not a tuned one. Canvas content is invisible to screen readers, so the grid has its own keyboard cursor and live region, and the other views rely on the caption and state panels.
+- **No backend.** The site is static on GitHub Pages and the extension is the same bundle. A share link carries the whole experiment (base64 JSON with run-length-encoded grid cells), so sharing needs no server or account. The trade-offs are long links (a 61×37 maze encodes to about 5 KB), saved experiments that stay in one browser, no way to revoke a link once sent, and no usage data. Links stay valid only as long as format version 3 is decoded the same way; `src/core/__tests__/share.test.ts` round-trips every prepared experiment and checks minimal, hand-edited and malformed links.
 
 ## Chrome extension
 
@@ -121,25 +128,29 @@ No content scripts, no host permissions and a strict CSP (`script-src 'self'`). 
 
 ## Development
 
-| Command             | What it does                                                             |
-| ------------------- | ------------------------------------------------------------------------ |
-| `npm test`          | Runs the 195 Vitest tests (algorithms, player, share links, UI journeys) |
-| `npm run lint`      | ESLint                                                                   |
-| `npm run typecheck` | `tsc --noEmit`                                                           |
-| `npm run build`     | Type-checks and builds the GitHub Pages site into `dist/`                |
-| `npm run build:ext` | Builds the extension into `dist-extension/`                              |
-| `npm run images`    | Regenerates the icons and `og.png` from real engine output               |
+| Command              | What it does                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| `npm test`           | Vitest: algorithms against reference implementations, player, share links, contrast, UI journeys |
+| `npm run lint`       | ESLint                                                                                           |
+| `npm run typecheck`  | `tsc --noEmit`                                                                                   |
+| `npm run build`      | Type-checks and builds the GitHub Pages site into `dist/`                                        |
+| `npm run build:ext`  | Builds the extension into `dist-extension/`                                                      |
+| `npm run images`     | Regenerates the icons and `og.png` from real engine output                                       |
+| `npm run bench`      | Times recording a run and seeking, for the largest input of each family                          |
+| `npm run perf`       | Plays every algorithm in headless Chrome and reports frame times (needs `CHROME_PATH`)           |
+| `npm run lighthouse` | Runs Lighthouse 12.8.2 on Explore and the Lab, mobile and desktop                                |
 
-CI runs lint, typecheck, tests and both builds on every push and pull request to `main`. Pushing to `main` also deploys `dist/` to GitHub Pages.
+CI runs lint, typecheck, tests and both builds on every push and pull request to `main`. Pushing to `main` also deploys `dist/` to GitHub Pages. The engine figures quoted above (path costs, expansion counts, inertia, the number of algorithms and experiments) are recomputed by `src/core/__tests__/readme.test.ts`. `bench`, `perf` and `lighthouse` are not part of CI; [docs/internals.md](docs/internals.md#measurements) explains how to run them and lists the last results with their environment.
 
 ## Limits
 
-- Lighthouse 12.8 on the production build (2026-10-09): accessibility and best practices 100 on Explore and the Lab, desktop and mobile. Performance is 100 on desktop and 87 to 89 on mobile, where first paint waits for the 150 KB (gzip) bundle on the simulated slow 4G link. There has been no session with a real screen reader yet.
-- No browser end-to-end tests in CI; the UI tests run in jsdom.
-- Smoothness was measured on a 60 Hz display only.
+- Accessibility has been checked with Lighthouse (`npm run lighthouse`) and a token contrast test, not with a screen reader. Nobody has used the app with NVDA or VoiceOver yet.
+- Frame times have only been measured in headless Chrome, which paces frames at 60 Hz. Nothing has been measured on a 120 or 144 Hz display or on a phone.
+- On Lighthouse's simulated mobile connection, first paint waits for the 151 KB (gzip) main bundle, so the mobile performance score is lower than desktop.
+- The UI tests run in jsdom. There are no browser end-to-end tests in CI.
 - No data-structure family (BST, hash table) and no Bellman-Ford or topological sort yet.
 
-See the [changelog](CHANGELOG.md) and the [audit and scorecard](docs/AUDIT.md) for what changed between versions and how it was checked.
+See the [changelog](CHANGELOG.md) and the [audit history](docs/AUDIT.md) for what changed between versions and how it was checked.
 
 ## License
 
