@@ -218,10 +218,10 @@ export function Legend() {
             ]
           : exp.family === "graph"
             ? [
-                ["bg-st-open", "candidate edge"],
-                ["bg-signal", "edge under test"],
+                ["bg-st-open", "candidate"],
+                ["bg-signal", "under test"],
                 ["bg-st-path", "tree edge"],
-                ["bg-ink", "node in tree"],
+                ["bg-ink", "tree node"],
               ]
             : exp.model === "kmeans"
               ? [
@@ -230,8 +230,8 @@ export function Legend() {
                 ]
               : [
                   ["bg-ink", "current fit"],
-                  ["bg-signal", "residual / descent path"],
-                  ["bg-st-path", "least-squares optimum"],
+                  ["bg-signal", "residuals, descent path"],
+                  ["bg-st-path", "best fit"],
                 ];
   return (
     <ul
