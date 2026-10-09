@@ -57,8 +57,8 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "weights",
-    title: "Weights change the answer",
-    question: "BFS and Dijkstra on muddy ground. Which path would you rather walk?",
+    title: "BFS and Dijkstra on mud",
+    question: "BFS counts moves and Dijkstra counts cost. Which path is cheaper to walk?",
     algos: ["bfs", "dijkstra"],
     build: (compact) => ({
       family: "grid",
@@ -70,7 +70,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "weighted-astar",
-    title: "An overconfident heuristic",
+    title: "Weighted A*, w = 3",
     question: "Multiply h by 3: far fewer cells, but is the path still the cheapest?",
     algos: ["astar"],
     build: (compact) => ({
@@ -96,7 +96,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "insertion-nearly",
-    title: "Insertion sort's best day",
+    title: "Insertion sort on nearly sorted data",
     question: "On nearly sorted data, can a quadratic sort beat merge sort?",
     algos: ["insertion", "merge"],
     build: (compact) => ({
@@ -123,7 +123,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: "binary-search",
     title: "Eight probes for 128 values",
-    question: "Linear search checks everything. Binary search halves the problem.",
+    question: "Linear search probes every value. Binary search halves the range on each probe.",
     algos: ["linear", "binary"],
     build: () => ({
       family: "search",
@@ -162,7 +162,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: "kmeans-moons",
-    title: "k-means can't see moons",
+    title: "k-means on two moons",
     question: "Clusters that are not round break the distance-to-centroid rule.",
     algos: ["kmeans"],
     build: () => ({
@@ -191,7 +191,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: "momentum",
     title: "Momentum in a narrow valley",
-    question: "Plain descent zig-zags. A running velocity cuts straight through.",
+    question: "Plain descent zig-zags across the valley. Does momentum reach the bottom sooner?",
     algos: ["gradient"],
     build: () => ({
       family: "learn",

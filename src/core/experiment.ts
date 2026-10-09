@@ -25,6 +25,7 @@ import {
   runGradient,
   type GradientEvent,
   type GradientParams,
+  type GradientStart,
   type GradientState,
   type RegressionInput,
 } from "./learn/gradient";
@@ -164,9 +165,9 @@ export type Run =
       family: "gradient";
       algo: "gradient";
       params: GradientParams;
-      input: RegressionInput;
+      input: GradientStart;
       trace: Trace<GradientEvent>;
-      player: Player<RegressionInput, GradientEvent, GradientState>;
+      player: Player<GradientStart, GradientEvent, GradientState>;
     };
 
 export function familyOfAlgo(id: AlgoId): Family {
@@ -346,13 +347,14 @@ export function runVariant(exp: Experiment, which: "a" | "b"): Run | null {
       } else {
         const vv = v as GradientExp["a"];
         const trace = runGradient(exp.input, vv.params);
+        const input = { ...exp.input, m0: vv.params.m0, b0: vv.params.b0 };
         return {
           family: "gradient",
           algo: "gradient",
           params: vv.params,
-          input: exp.input,
+          input,
           trace,
-          player: new Player(gradientMachine, exp.input, trace.events, 32),
+          player: new Player(gradientMachine, input, trace.events, 32),
         };
       }
   }
@@ -533,7 +535,7 @@ export function compareInsights(a: Run, b: Run, la: string, lb: string): string[
     out.push(
       ta === tb
         ? `Both trees weigh ${ta}. A minimum spanning tree's weight is unique.`
-        : `Tree weights differ (${ta} vs ${tb}): ties between equal edges.`,
+        : `Tree weights differ (${ta} vs ${tb}): the graph is disconnected, so the runs span different sets of nodes.`,
     );
     out.push(`${la} discards ${ra} edges; ${lb} discards ${rb}.`);
     return out;

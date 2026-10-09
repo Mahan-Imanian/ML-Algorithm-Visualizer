@@ -96,7 +96,7 @@ export function pathCost(g: GridInput, path: number[]): number {
   for (let i = 1; i < path.length; i++) {
     const a = path[i - 1];
     const b = path[i];
-    const diag = Math.abs(a - b) !== 1 && Math.abs(a - b) !== g.w;
+    const diag = Math.floor(a / g.w) !== Math.floor(b / g.w) && a % g.w !== b % g.w;
     cost += g.cells[b] * (diag ? SQRT2 : 1);
   }
   return cost;

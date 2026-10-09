@@ -120,7 +120,7 @@ export const ALGOS: AlgoInfo[] = [
       "Finding a cheaper route to a cell pushes a new heap entry; the old one goes stale.",
       "Stale entries are skipped when they surface. This is lazy deletion.",
     ],
-    watch: "On weighted terrain, compare its path cost with BFS. Same grid, different answer.",
+    watch: "On weighted terrain, compare its path cost with BFS on the same grid.",
     complexity: {
       best: "O(1)",
       average: "O(E log V)",
@@ -233,7 +233,7 @@ export const ALGOS: AlgoInfo[] = [
       "The new value swaps left past every larger neighbor.",
       "On nearly sorted input almost nothing moves, so it runs in close to linear time.",
     ],
-    watch: "Try the nearly sorted preset against merge sort: insertion wins.",
+    watch: "Try the nearly sorted preset against merge sort: insertion makes fewer comparisons.",
     complexity: { best: "O(n)", average: "O(n²)", worst: "O(n²)", space: "O(1)" },
     props: [
       { label: "Stable", value: true },
@@ -258,7 +258,7 @@ export const ALGOS: AlgoInfo[] = [
     summary: "Scans the unsorted part for its minimum and moves it to the front.",
     how: [
       "Pass i finds the smallest value in a[i..n-1].",
-      "Exactly one swap per pass, but always n²/2 comparisons.",
+      "At most one swap per pass, but always n(n−1)/2 comparisons.",
       "Input order does not change the number of comparisons.",
     ],
     watch: "Count comparisons on sorted input: it does the same work as on random input.",
@@ -593,8 +593,7 @@ export const ALGOS: AlgoInfo[] = [
       "The learning rate scales the step. Too small crawls, too large overshoots and diverges.",
       "Momentum keeps a running velocity, which speeds up travel along long valleys.",
     ],
-    watch:
-      "Push the learning rate past 1 and watch the path zig-zag across the valley, then explode.",
+    watch: "Set the learning rate above 1: the path zig-zags across the valley, then diverges.",
     complexity: {
       best: "O(n) per step",
       average: "O(n·steps)",
@@ -612,7 +611,7 @@ export const ALGOS: AlgoInfo[] = [
       L("∇ ← (∂MSE/∂m, ∂MSE/∂b)", "gradient", 1),
       L("v ← β·v + ∇", undefined, 1),
       L("(m, b) ← (m, b) − lr · v", "update", 1),
-      L("stop if the loss explodes", "diverged", 1),
+      L("stop if the loss diverges", "diverged", 1),
     ],
   },
 ];

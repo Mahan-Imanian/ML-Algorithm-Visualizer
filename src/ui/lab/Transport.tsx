@@ -129,10 +129,14 @@ function Scrubber({ large }: { large?: boolean }) {
       if (thumb.current) thumb.current.style.transform = `translateX(${f * size.w}px)`;
     };
     place();
-    return useLab.subscribe((s, p) => {
+    const unsubscribe = useLab.subscribe((s, p) => {
       if ((s.cursorA !== p.cursorA || s.cursorB !== p.cursorB || s.runA !== p.runA) && !raf)
         raf = requestAnimationFrame(place);
     });
+    return () => {
+      unsubscribe();
+      cancelAnimationFrame(raf);
+    };
   }, [size.w]);
 
   const marks = useMemo(

@@ -61,16 +61,16 @@ export function Explore() {
         <div>
           <p className="label mb-3">Algorithm lab</p>
           <h1 className="text-2xl font-semibold sm:text-3xl">
-            See the queue, the heap, the pivot. Not just the animation.
+            Run an algorithm one step at a time, with its queue, heap or call stack beside it.
           </h1>
           <p className="mt-4 max-w-[52ch] text-md text-ink-2">
-            Algoscope records every operation an algorithm performs and plays it back beside the
-            live data structures and the pseudocode line that caused it. Step backward, compare two
-            algorithms on the same input, then share the exact experiment with a link.
+            Algoscope records each operation of a run, so you can scrub forward and backward while
+            the pseudocode highlights the line that ran. Two algorithms can run on the same input
+            for comparison, and a link reopens the exact setup.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
             <Button variant="signal" size="lg" onClick={startTour}>
-              Take the 60-second tour
+              Take the 6-step tour
             </Button>
             <Button variant="outline" size="lg" onClick={() => navigate("/lab")}>
               Open the lab
@@ -87,7 +87,6 @@ export function Explore() {
           )}
         </div>
         <a href="#/lab?s=astar-vs-dijkstra" className="group block border border-rule bg-surface">
-          <span className="sr-only">Open the A* versus Dijkstra experiment. </span>
           <Thumb
             build={hero}
             label="A* versus Dijkstra on the same grid. Cells only Dijkstra expanded are shaded orange; both find the same path."
@@ -101,7 +100,7 @@ export function Explore() {
               <span className="h-2.5 w-2.5 bg-st-a/45" /> only Dijkstra
             </span>
             <span className="ml-auto text-ink group-hover:underline group-hover:underline-offset-4">
-              Same path, a fraction of the work →
+              Open A* vs Dijkstra →
             </span>
           </div>
         </a>

@@ -26,7 +26,11 @@ export interface KMeansParams {
 export const DEFAULT_KMEANS_PARAMS: KMeansParams = { k: 4, init: "plusplus", manual: [] };
 
 export const CLUSTER_DATASETS: { id: ClusterData; label: string; hint: string }[] = [
-  { id: "blobs", label: "Four blobs", hint: "Well separated, round clusters. k-means' home turf." },
+  {
+    id: "blobs",
+    label: "Four blobs",
+    hint: "Well separated, round clusters: the case k-means handles well.",
+  },
   { id: "overlap", label: "Overlapping", hint: "Three clusters bleed into each other." },
   {
     id: "uneven",

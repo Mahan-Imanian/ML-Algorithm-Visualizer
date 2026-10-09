@@ -6,6 +6,7 @@ import {
   heuristic,
   moveCost,
   neighbors,
+  pathCost,
   round2,
   type GridInput,
   type Heuristic,
@@ -105,17 +106,11 @@ export function runGrid(
   const finishFound = (op: string) => {
     const path: number[] = [];
     for (let c = g.target; c !== -1; c = parent[c]) path.unshift(c);
-    let cost = 0;
-    for (let i = 1; i < path.length; i++) {
-      const a = path[i - 1];
-      const b = path[i];
-      const diag = Math.abs(a - b) !== 1 && Math.abs(a - b) !== g.w;
-      cost += g.cells[b] * (diag ? Math.SQRT2 : 1);
-    }
+    const cost = pathCost(g, path);
     tb.emit({
       k: "found",
       op,
-      note: `Target reached. The reconstructed path has ${path.length - 1} edges and costs ${round2(cost)}`,
+      note: `Target reached: path of ${path.length - 1} moves, cost ${round2(cost)}`,
       path,
       cost: round2(cost),
     });

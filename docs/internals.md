@@ -30,22 +30,25 @@ extension/       Manifest V3 build of the same app
 
 ## Performance
 
-Measured by the author on the 3.1.0 production build in Chrome on a 60 Hz display, with the frame monitor (`H`). The monitor reports rAF intervals, per-surface draw time and per-component commit rates; it does not estimate FPS. These numbers were not re-measured for this document.
+Budgets, and how the production build measured against them on 2026-10-09 (Chrome 142 headless on a 60 Hz desktop, Node 24 for trace generation):
 
-| Workload                                                                       | Median frame | p95             | Worst          | Dropped | Canvas draw (avg / max)                     |
-| ------------------------------------------------------------------------------ | ------------ | --------------- | -------------- | ------- | ------------------------------------------- |
-| Largest weighted grid (61×37), BFS vs Dijkstra overlaid, Log open, 480 steps/s | 16.7 ms      | 17.0 ms         | 17.2 ms        | 0.0 %   | 0.54 / 1.40 ms                              |
-| Small, medium and large grids; sort, k-means and gradient compares, 8×         | 16.7 ms      | ≤ 17.4 ms (p99) | 33.2 ms (once) | 0–0.6 % | grid 0.12–0.27 / 0.8 ms; bars 0.32 / 4.4 ms |
+| Budget                                                                      | Measured                                                                                                     |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Recording a run (trace plus keyframes) for the largest input: under 100 ms  | Worst case 7.2 ms median, 11 ms max: Dijkstra on the 61×37 mud field with diagonals, 4,262 events            |
+| Playback at 1× and 4×: p95 frame interval at most one 60 Hz frame (≤ 17 ms) | p95 16.8 ms, worst 17.3 ms, no frame over 25 ms and no long tasks across all 18 algorithms and 5 comparisons |
+| Canvas draw per frame: average under 2.5 ms                                 | Average 0.1 to 2.3 ms, single draws up to 4.3 ms                                                             |
 
-- Text panels commit about 9–16 times per second during playback, under the 20 Hz cap, regardless of speed.
+Other inputs at their maximum (64-value sorts, 128-value searches, 30-node graphs, 400 points with k = 8, 500 gradient steps) record in under 2 ms. Frame intervals come from a `requestAnimationFrame` loop in the page while it plays; draw costs come from the frame monitor (`H`). With 4× CPU throttling the two largest grid comparisons drop to 30–60 fps: the 20 Hz panel commits cost about 5 ms each unthrottled, and that work grows with the throttle.
+
+- Text panels commit about 9–18 times per second during playback, under the 20 Hz cap, regardless of speed.
 - JS heap is 48 MB on the largest comparison.
 - Initial JS is 459 KB (150 KB gzip). The lab chunk loads separately (104 KB, 35 KB gzip). These two figures match `npm run build` output on 2026-10-09. There are no third-party requests.
-- For 120 and 144 Hz, the per-frame budgets are 8.3 ms and 6.9 ms. The worst canvas draw above (1.4 ms) is well inside both. This was not measured on a high-refresh display.
+- For 120 and 144 Hz, the per-frame budgets are 8.3 ms and 6.9 ms. The worst canvas draw above (4.3 ms) is inside both. This was not measured on a high-refresh display.
 - Version 3.0.0 had a p95 of 233 ms on the same large comparison and resized the stage whenever the caption wrapped.
 
 ## Accessibility
 
-- Lighthouse accessibility is 100 on Explore and the Lab, in both themes, on desktop and mobile (author's measurement on 3.1.0). Re-checked on 2026-10-09 with Lighthouse 12.2.1 against the live site, default (light) theme: 100 on Explore and the Lab, desktop and mobile.
+- Lighthouse accessibility is 100 on Explore and the Lab, in both themes, on desktop and mobile (author's measurement on 3.1.0). Re-checked on 2026-10-09 with Lighthouse 12.8.2 against the production build, default (light) theme: accessibility and best practices 100 on Explore and the Lab, desktop and mobile; performance 100 on desktop, 87 to 89 on mobile, and cumulative layout shift 0.
 - Every control is keyboard reachable with visible focus. The grid is an application region with arrow-key navigation, `Space` to apply a tool, and `S` / `T` to place the start and target.
 - Live regions announce the current step when paused and stay quiet during playback.
 - Motion respects the reduced-motion setting, with an override in Settings. Single-key shortcuts can be turned off.
