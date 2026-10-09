@@ -255,31 +255,20 @@ export const Github = (p: P) => (
   </svg>
 );
 
-export function Mark({ size = 22 }: { size?: number }) {
+export function Mark({ size = 24 }: { size?: number }) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 24 24"
-      fill="none"
+      viewBox="2 2 12 12"
+      shapeRendering="crispEdges"
       aria-hidden="true"
       focusable="false"
     >
-      <path
-        d="M2 7V2h5M17 2h5v5M22 17v5h-5M7 22H2v-5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="square"
-      />
-      <path
-        d="M6 17.5h4v-5h4v-6h4"
-        stroke="rgb(var(--signal))"
-        strokeWidth="2.2"
-        strokeLinecap="square"
-        strokeLinejoin="miter"
-      />
-      <rect x="4.5" y="16" width="3" height="3" fill="currentColor" />
-      <circle cx="18" cy="6.5" r="2" fill="rgb(var(--signal))" />
+      <path d="M2 14V5h3v3h3v3h3v3z" fill="rgb(var(--st-closed))" />
+      <path d="M2 2h3v3H2zM5 5h3v3H5zM8 8h3v3H8zM11 11h3v3h-3z" fill="rgb(var(--signal))" />
+      <path d="M2 11h3v3H2z" fill="currentColor" />
+      <path d="M11 2h3v3h-3zM12 3v1h1V3z" fill="currentColor" fillRule="evenodd" />
     </svg>
   );
 }
