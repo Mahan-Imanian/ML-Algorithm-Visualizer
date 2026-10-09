@@ -28,7 +28,7 @@ export const DEFAULT_KMEANS_PARAMS: KMeansParams = { k: 4, init: "plusplus", man
 export const K_RANGE: Range = { min: 1, max: 8, step: 1 };
 export const CLUSTER_POINTS: Range = { min: 60, max: 400, step: 10 };
 export const DEFAULT_CLUSTER_POINTS = 200;
-export const KMEANS_MAX_ITERATIONS = 40;
+const KMEANS_MAX_ITERATIONS = 40;
 
 export const CLUSTER_DATASETS: { id: ClusterData; label: string; hint: string }[] = [
   {
