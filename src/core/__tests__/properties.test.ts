@@ -454,7 +454,8 @@ describe("gradient descent against the loss curvature", () => {
       for (const lr of [0.01, limit / 4, limit / 2, limit * 0.95]) {
         const params = { lr, beta: 0, m0: -1.5 + rng() * 3.8, b0: -1 + rng() * 2.4, steps: 200 };
         const trace = runGradient(input, params);
-        const s = new Player(gradientMachine, input, trace.events).at(trace.events.length).state;
+        const start = { ...input, m0: params.m0, b0: params.b0 };
+        const s = new Player(gradientMachine, start, trace.events).at(trace.events.length).state;
         expect(s.phase).not.toBe("diverged");
         for (let i = 1; i < s.path.length; i++)
           expect(s.path[i].loss).toBeLessThanOrEqual(s.path[i - 1].loss + 1e-12);

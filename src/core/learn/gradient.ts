@@ -176,17 +176,19 @@ export interface GradientState {
   phase: "start" | "gradient" | "update" | "diverged";
 }
 
-export const gradientMachine: Machine<RegressionInput, GradientEvent, GradientState> = {
+export type GradientStart = RegressionInput & Pick<GradientParams, "m0" | "b0">;
+
+export const gradientMachine: Machine<GradientStart, GradientEvent, GradientState> = {
   init(input) {
     return {
       points: input.points,
-      m: 0,
-      b: 0,
+      m: input.m0,
+      b: input.b0,
       gm: 0,
       gb: 0,
       vm: 0,
       vb: 0,
-      loss: 0,
+      loss: lossAt(input.points, input.m0, input.b0),
       step: 0,
       path: [],
       phase: "start",

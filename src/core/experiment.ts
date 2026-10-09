@@ -25,6 +25,7 @@ import {
   runGradient,
   type GradientEvent,
   type GradientParams,
+  type GradientStart,
   type GradientState,
   type RegressionInput,
 } from "./learn/gradient";
@@ -164,9 +165,9 @@ export type Run =
       family: "gradient";
       algo: "gradient";
       params: GradientParams;
-      input: RegressionInput;
+      input: GradientStart;
       trace: Trace<GradientEvent>;
-      player: Player<RegressionInput, GradientEvent, GradientState>;
+      player: Player<GradientStart, GradientEvent, GradientState>;
     };
 
 export function familyOfAlgo(id: AlgoId): Family {
@@ -346,13 +347,14 @@ export function runVariant(exp: Experiment, which: "a" | "b"): Run | null {
       } else {
         const vv = v as GradientExp["a"];
         const trace = runGradient(exp.input, vv.params);
+        const input = { ...exp.input, m0: vv.params.m0, b0: vv.params.b0 };
         return {
           family: "gradient",
           algo: "gradient",
           params: vv.params,
-          input: exp.input,
+          input,
           trace,
-          player: new Player(gradientMachine, exp.input, trace.events, 32),
+          player: new Player(gradientMachine, input, trace.events, 32),
         };
       }
   }
