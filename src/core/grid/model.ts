@@ -1,3 +1,5 @@
+import type { Range } from "../types";
+
 export type Heuristic = "manhattan" | "euclidean" | "octile" | "zero";
 export type Terrain = "open" | "maze" | "rooms" | "scatter" | "weighted" | "trap" | "custom";
 export type GridSize = "S" | "M" | "L" | "T";
@@ -21,9 +23,11 @@ export const GRID_SIZES: Record<GridSize, { w: number; h: number; label: string 
   T: { w: 17, h: 25, label: "Tall · 17×25" },
 };
 
-export const SQRT2 = Math.SQRT2;
+export const MUD_COST: Range = { min: 2, max: 9, step: 1 };
 
-export function rowCol(cell: number, w: number): [number, number] {
+const SQRT2 = Math.SQRT2;
+
+function rowCol(cell: number, w: number): [number, number] {
   return [Math.floor(cell / w), cell % w];
 }
 

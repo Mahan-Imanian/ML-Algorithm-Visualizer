@@ -5,6 +5,7 @@ import { SCENARIOS } from "@/core/scenarios";
 import { makeGrid, TERRAINS } from "@/core/grid/terrain";
 import type { GridExp } from "@/core/experiment";
 import { toFile } from "@/core/share";
+import { isCompactWidth } from "@/lib/layout";
 import { downloadText } from "@/lib/utils";
 import { navigate, parseHash } from "@/lib/router";
 import { useLab, type GraphTool, type Tool } from "@/store/lab";
@@ -294,7 +295,7 @@ export function buildCommands(): Command[] {
       keywords: `${a.short} ${a.aliases.join(" ")} ${familyName(a.family)}`,
       run: () => {
         goLab();
-        lab().setAlgo(a.id as AlgoId, window.innerWidth < 768);
+        lab().setAlgo(a.id as AlgoId, isCompactWidth(window.innerWidth));
       },
     });
   }
@@ -376,7 +377,7 @@ function norm(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9*²\s]/g, " ");
 }
 
-export function scoreCommand(c: Command, query: string): number {
+function scoreCommand(c: Command, query: string): number {
   const q = norm(query).trim();
   if (!q) return 1;
   const label = norm(c.label);

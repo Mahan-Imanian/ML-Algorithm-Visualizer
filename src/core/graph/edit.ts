@@ -1,4 +1,12 @@
-import { edgeWeight, GRAPH_MAX, GRAPH_MIN, round3, type GraphInput, type GraphNode } from "./graph";
+import {
+  clampNodeCoord,
+  edgeWeight,
+  findRoot,
+  GRAPH_MAX,
+  GRAPH_MIN,
+  type GraphInput,
+  type GraphNode,
+} from "./graph";
 
 const sortEdges = (edges: GraphInput["edges"]) =>
   [...edges].sort((x, y) => x[0] - y[0] || x[1] - y[1]);
@@ -24,10 +32,7 @@ export function removeEdge(g: GraphInput, index: number): GraphInput {
 
 export function addNode(g: GraphInput, at: GraphNode, links = 2): GraphInput {
   if (g.nodes.length >= GRAPH_MAX) return g;
-  const p = {
-    x: round3(Math.min(0.98, Math.max(0.02, at.x))),
-    y: round3(Math.min(0.98, Math.max(0.02, at.y))),
-  };
+  const p = { x: clampNodeCoord(at.x), y: clampNodeCoord(at.y) };
   const nodes = [...g.nodes, p];
   const id = nodes.length - 1;
   const nearest = g.nodes
@@ -54,7 +59,7 @@ export function removeNode(g: GraphInput, index: number): GraphInput {
 
 export function components(g: GraphInput): number {
   const parent = g.nodes.map((_, i) => i);
-  const find = (x: number): number => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+  const find = (x: number) => findRoot(parent, x);
   for (const [a, b] of g.edges) parent[find(a)] = find(b);
   return new Set(g.nodes.map((_, i) => find(i))).size;
 }

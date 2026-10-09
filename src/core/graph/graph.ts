@@ -1,7 +1,7 @@
 import { MinHeap } from "../heap";
 import { mulberry32 } from "../rng";
 import { TraceBuilder } from "../trace";
-import type { BaseEvent, Machine, Trace } from "../types";
+import type { BaseEvent, Machine, Range, Trace } from "../types";
 
 export type GraphAlgo = "prim" | "kruskal";
 
@@ -20,14 +20,22 @@ export interface GraphInput {
 
 export const GRAPH_MIN = 5;
 export const GRAPH_MAX = 30;
+export const GRAPH_DENSITY: Range = { min: 2, max: 5, step: 1 };
+export const DEFAULT_GRAPH_DENSITY = 3;
+
+const WEIGHT_PER_UNIT = 100;
+const NODE_MARGIN = 0.02;
+
+export const clampNodeCoord = (v: number) =>
+  round3(Math.min(1 - NODE_MARGIN, Math.max(NODE_MARGIN, v)));
 
 export const round3 = (v: number) => Math.round(v * 1000) / 1000;
 
 export function edgeWeight(a: GraphNode, b: GraphNode): number {
-  return Math.max(1, Math.round(Math.hypot(a.x - b.x, a.y - b.y) * 100));
+  return Math.max(1, Math.round(Math.hypot(a.x - b.x, a.y - b.y) * WEIGHT_PER_UNIT));
 }
 
-export function makeGraph(n: number, seed: number, density = 3): GraphInput {
+export function makeGraph(n: number, seed: number, density = DEFAULT_GRAPH_DENSITY): GraphInput {
   const size = Math.max(GRAPH_MIN, Math.min(GRAPH_MAX, Math.round(n)));
   const rng = mulberry32(seed);
   const nodes: GraphNode[] = [];
@@ -59,7 +67,7 @@ export function connectEdges(nodes: GraphNode[], density: number): [number, numb
     for (const o of near) add(i, o.j);
   }
   const parent = nodes.map((_, i) => i);
-  const find = (x: number): number => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+  const find = (x: number) => findRoot(parent, x);
   for (const [a, b] of set.values()) parent[find(a)] = find(b);
   for (;;) {
     const roots = new Set(nodes.map((_, i) => find(i)));
@@ -79,7 +87,20 @@ export function connectEdges(nodes: GraphNode[], density: number): [number, numb
   return [...set.values()].sort((x, y) => x[0] - y[0] || x[1] - y[1]);
 }
 
-export function sortedEdgeOrder(input: GraphInput): number[] {
+export function edgesBetween(
+  nodes: GraphNode[],
+  pairs: [number, number][],
+): [number, number, number][] {
+  const unique = new Map<string, [number, number, number]>();
+  for (const [x, y] of pairs) {
+    const a = Math.min(x, y);
+    const b = Math.max(x, y);
+    unique.set(`${a}-${b}`, [a, b, edgeWeight(nodes[a], nodes[b])]);
+  }
+  return [...unique.values()].sort((x, y) => x[0] - y[0] || x[1] - y[1]);
+}
+
+function sortedEdgeOrder(input: GraphInput): number[] {
   return input.edges
     .map((_, i) => i)
     .sort((a, b) => input.edges[a][2] - input.edges[b][2] || a - b);
@@ -157,10 +178,7 @@ export function runGraph(input: GraphInput, algo: GraphAlgo): Trace<GraphEvent> 
     const order = sortedEdgeOrder(input);
     const parent = nodes.map((_, i) => i);
     const size = nodes.map(() => 1);
-    const find = (x: number) => {
-      while (parent[x] !== x) x = parent[x];
-      return x;
-    };
+    const find = (x: number) => findRoot(parent, x);
     tb.emit({ k: "done", op: "init", note: `Sort ${edges.length} edges by weight` });
     tb.endGroup(0);
     for (const e of order) {
@@ -232,12 +250,12 @@ export interface GraphState {
   done: boolean;
 }
 
-export const EDGE_IDLE = 0;
+const EDGE_IDLE = 0;
 export const EDGE_CANDIDATE = 1;
 export const EDGE_TREE = 2;
 export const EDGE_REJECTED = 3;
 
-export function findRoot(uf: Int32Array, x: number): number {
+export function findRoot(uf: ArrayLike<number>, x: number): number {
   while (uf[x] !== x) x = uf[x];
   return x;
 }

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { metricsAt, variantLabel } from "@/core/experiment";
 import { familyName, getAlgo } from "@/core/info";
-import { useIsCompact } from "@/lib/layout";
+import { PRESENT_ROWS_PX, STAGE_ROWS_PX, useIsCompact } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 import { useLab } from "@/store/lab";
 import { useUI, type PresentPanel } from "@/store/ui";
@@ -70,7 +70,12 @@ export function Present() {
     <div
       className="fixed inset-0 z-40 grid bg-field"
       style={{
-        gridTemplateRows: `64px minmax(0,1fr) ${panels.explain ? "132px" : "0px"} ${compact ? "148px" : "104px"}`,
+        gridTemplateRows: [
+          `${PRESENT_ROWS_PX.header}px`,
+          "minmax(0,1fr)",
+          `${panels.explain ? PRESENT_ROWS_PX.caption : 0}px`,
+          `${compact ? STAGE_ROWS_PX.phoneTransport : PRESENT_ROWS_PX.transport}px`,
+        ].join(" "),
       }}
       role="region"
       aria-label="Presentation"

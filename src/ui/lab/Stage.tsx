@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { metricsAt, variantLabel, type Run } from "@/core/experiment";
 import { getAlgo } from "@/core/info";
+import { PRESENT_ROWS_PX, STAGE_ROWS_PX } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 import { useLab } from "@/store/lab";
 import { useLiveCursor, usePresented, usePresentedCursor } from "../clock";
@@ -323,8 +324,6 @@ function Pane({
   );
 }
 
-const CAPTION_H = "h-[104px]";
-
 export function NowCaption({ large = false }: { large?: boolean }) {
   useCommitCounter("caption");
   const runA = useLab((s) => s.runA);
@@ -338,9 +337,9 @@ export function NowCaption({ large = false }: { large?: boolean }) {
     <div
       className={cn(
         "relative shrink-0 overflow-hidden border-t border-rule bg-surface [contain:strict]",
-        large ? "h-[132px]" : CAPTION_H,
         b && "grid grid-cols-2 divide-x divide-rule",
       )}
+      style={{ height: large ? PRESENT_ROWS_PX.caption : STAGE_ROWS_PX.caption }}
       data-tour="now"
     >
       {editing ? (

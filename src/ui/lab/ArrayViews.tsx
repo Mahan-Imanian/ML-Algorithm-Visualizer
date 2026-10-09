@@ -12,6 +12,7 @@ type SearchRun = Extract<Run, { family: "search" }>;
 
 const POINTER_ORDER = ["lo", "i", "j", "min", "pivot", "child", "k", "mid", "hi", "end"];
 const PTR_H = 40;
+const BAR_MOTION = { stepFraction: 0.45, minTauS: 0.025, maxTauS: 0.12, pausedRate: 4 };
 
 function cursorOf(which: "a" | "b") {
   const s = useLab.getState();
@@ -20,8 +21,9 @@ function cursorOf(which: "a" | "b") {
 
 function settle(dt: number) {
   const s = useLab.getState();
-  const rate = s.playing ? baseRate(s) * SPEEDS[s.speed] : 4;
-  const tau = Math.max(0.025, Math.min(0.12, 0.45 / Math.max(1, rate)));
+  const rate = s.playing ? baseRate(s) * SPEEDS[s.speed] : BAR_MOTION.pausedRate;
+  const fit = BAR_MOTION.stepFraction / Math.max(1, rate);
+  const tau = Math.max(BAR_MOTION.minTauS, Math.min(BAR_MOTION.maxTauS, fit));
   return 1 - Math.exp(-dt / 1000 / tau);
 }
 

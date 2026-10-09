@@ -3,9 +3,12 @@ import { defaultExperiment, variantLabel } from "@/core/experiment";
 import { isAlgoId } from "@/core/info";
 import { getScenario } from "@/core/scenarios";
 import { decode, encode } from "@/core/share";
+import { isCompactWidth } from "@/lib/layout";
 import { replaceHash } from "@/lib/router";
 import { useLab } from "@/store/lab";
 import { useLibrary } from "@/store/library";
+
+const URL_WRITE_DELAY_MS = 350;
 
 export function useLabRoute(query: URLSearchParams) {
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +16,7 @@ export function useLabRoute(query: URLSearchParams) {
   const lastWritten = useRef<string>("");
   useEffect(() => {
     const q = new URLSearchParams(key);
-    const compact = window.innerWidth < 768;
+    const compact = isCompactWidth(window.innerWidth);
     const e = q.get("e");
     const s = q.get("s");
     const algo = q.get("algo");
@@ -51,7 +54,7 @@ export function useLabRoute(query: URLSearchParams) {
             code,
             `${variantLabel(st.exp.a)}${st.exp.b ? ` vs ${variantLabel(st.exp.b)}` : ""}`,
           );
-      }, 350);
+      }, URL_WRITE_DELAY_MS);
     });
     return () => {
       unsub();

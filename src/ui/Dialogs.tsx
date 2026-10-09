@@ -184,19 +184,18 @@ export function ImportDialog() {
       setLink("");
     }
   }, [open]);
-  const loadCode = (code: string, cursor = 0) => {
+  const loadCode = (code: string) => {
     close();
     navigate(`/lab?e=${code}`);
-    if (cursor) setTimeout(() => useLab.getState().seek(cursor), 50);
     toast.success("Experiment loaded");
   };
   const onFile = async (f: File | undefined) => {
     if (!f) return;
-    if (f.size > 2_000_000)
+    if (f.size > MAX_IMPORT_BYTES)
       return setError("That file is too large to be an Algoscope experiment.");
     const r = fromFile(await f.text());
     if (!r.ok) return setError(r.error);
-    loadCode(encode(r.exp), r.cursor);
+    loadCode(encode(r.exp, r.cursor));
   };
   const onLink = (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,7 +203,7 @@ export function ImportDialog() {
     const code = m ? m[1] : link.trim();
     const r = decode(code);
     if (!r.ok) return setError(r.error);
-    loadCode(encode(r.exp), r.cursor);
+    loadCode(encode(r.exp, r.cursor));
   };
   return (
     <Dialog
@@ -254,6 +253,7 @@ export function ImportDialog() {
 }
 
 const MOD = isMac ? "⌘" : "Ctrl";
+const MAX_IMPORT_BYTES = 2_000_000;
 
 const SHORTCUTS: [string, string[]][] = [
   ["Play / pause", ["Space"]],

@@ -1,5 +1,5 @@
 import { FAMILIES, algosOf, familyName, getAlgo, type AlgoId } from "@/core/info";
-import { useLayout } from "@/lib/layout";
+import { isCompactWidth, useLayout } from "@/lib/layout";
 import { cn, isMac } from "@/lib/utils";
 import { useLab } from "@/store/lab";
 import { isDarkTheme, useSettings } from "@/store/settings";
@@ -79,7 +79,7 @@ function AlgoSwitcher() {
       <MenuContent align="start" className="max-h-[70dvh] w-[320px] overflow-y-auto">
         <MenuRadioGroup
           value={algo}
-          onValueChange={(v) => setAlgo(v as AlgoId, window.innerWidth < 768)}
+          onValueChange={(v) => setAlgo(v as AlgoId, isCompactWidth(window.innerWidth))}
         >
           {FAMILIES.map((f, i) => (
             <div key={f.id}>

@@ -1,13 +1,46 @@
 # Changelog
 
-## 3.1.0
+## Unreleased
 
-Stability, smoothness and presentation. See [docs/AUDIT.md](docs/AUDIT.md#310-follow-up-audit) for the measurements.
+Changes from the [2026-10-09 credibility audit](docs/AUDIT.md#credibility-audit-2026-10-09-unreleased) and the QA pass before it.
 
 ### Fixed
 
-- **The visualization no longer moves when text changes.** In 3.0.0 the caption and the pane header could wrap, which resized the stage and made the canvas re-centre on every step: three different canvas sizes during one BFS run and fourteen during a comparison. The stage now sits in fixed grid tracks with `contain: strict`, and captions, headers and counters have fixed sizes. Across about 150 frames for each algorithm, every canvas keeps exactly one size.
-- **Large comparisons no longer stutter.** p95 frame time on the largest weighted comparison fell from 233 ms to 17 ms. Canvases draw in `requestAnimationFrame` from the live cursor; text panels update at most 20 times a second during playback.
+- A shared graph whose edges had all been removed was reopened with generated edges.
+- Duplicate and reversed edges in a link were kept as separate edges.
+- Grid cells in a link were accepted with trailing characters after a run length.
+- An imported file with a missing or malformed version was reported as coming from a newer version.
+- Links accepted parameter values outside the editor's ranges, such as 500 gradient steps.
+- Custom sort input accepted hexadecimal, binary and exponent notation and converted it silently.
+- A saved experiment with an unknown family crashed the saved list, and a stored library that was not a list crashed the app on load.
+- Importing a file or link at a saved step could open at step 0 when the lab loaded slowly.
+- From the QA pass: diagonal steps were detected wrongly in path costs; jump search ran its jump phase on an empty array; differing spanning-tree weights were blamed on the wrong cause; insertion sort's sorted prefix was called final; selection sort's About text overstated its swaps; the gradient run hid its start parameters at step 0; linear search did not narrow its candidate range; the theme toggle stopped working after the first switch; legends clipped at 390 px; presentation mode did not fit phones; the timeline thumb jumped back after a stale frame; reduced motion used 0.01 ms transitions, which Lighthouse counted as layout shift.
+
+### Changed
+
+- Parameter ranges are defined once per algorithm and shared by the editor, the link decoder and the generators.
+- Playback rates, keyframe intervals, motion timing, layout heights, breakpoints and generator thresholds are named constants, documented in [docs/internals.md](docs/internals.md#tuning-constants).
+- The scatter terrain hint now says what the generator does (redraws until the target is reachable) instead of "always solvable".
+- README, internals and audit figures were re-measured with the new scripts or removed. The self-assigned scorecards were removed from the audit.
+
+### Added
+
+- `npm run bench`, `npm run perf` and `npm run lighthouse`, with `puppeteer-core` as a dev dependency for the frame-time script.
+- Tests for the colour-token contrast ratios, for the figures quoted in the README, for malformed links and files, and property and trace-integrity tests for every family.
+- A new mark and recaptured screenshots.
+
+### Removed
+
+- Unused exports, icons and helpers found by `knip`.
+
+## 3.1.0
+
+Layout stability, rendering and presentation. See [docs/AUDIT.md](docs/AUDIT.md#310-follow-up-audit-of-300) for the findings. The figures below were measured once at release; `npm run perf` now repeats the canvas-size and frame-time checks for the current code.
+
+### Fixed
+
+- **The visualization no longer moves when text changes.** In 3.0.0 the caption and the pane header could wrap, which resized the stage and made the canvas re-centre on every step: three different canvas sizes during one BFS run and fourteen during a comparison. The stage now sits in fixed grid tracks with `contain: strict`, and captions, headers and counters have fixed sizes. Across about 150 frames for each algorithm, every canvas kept exactly one size.
+- **Large comparisons no longer stutter.** The 95th-percentile frame time on the largest weighted comparison fell from 233 ms to 17 ms. Canvases draw in `requestAnimationFrame` from the live cursor; text panels update at most 20 times a second during playback.
 - A run switched from the palette could hand the code panel a cursor from the previous run and crash it.
 - Typing `BFS` in the palette ranked the "BFS floods a maze" experiment above breadth-first search itself. Arrow-key order now matches the grouped order on screen.
 - Sorting and gradient runs ended on a leftover sub-step ("First value is in place"). They now end with a summary of the run.
@@ -19,7 +52,7 @@ Stability, smoothness and presentation. See [docs/AUDIT.md](docs/AUDIT.md#310-fo
 ### Added
 
 - **Presentation mode** (`P`): full screen, large type, toggleable code, state, explanation and metrics (`C`, `S`, `E`, `M`).
-- **Motion that shows cause:** cells grow in when discovered, the edge to each queued neighbour draws in, the expanded cell crossfades, the path traces back from the target, bars travel to their new positions, and frontier rows slide as the queue changes. Motion is time-based, so it behaves the same at any refresh rate.
+- **Motion tied to operations:** cells grow in when discovered, the edge to each queued neighbour draws in, the expanded cell crossfades, the path traces back from the target, bars travel to their new positions, and frontier rows slide as the queue changes. Motion is driven by elapsed time rather than frame count.
 - **Graph editor:** connect, disconnect, add and delete nodes. Disconnected graphs produce a spanning forest and say so.
 - **Bookmarks** (`B`) on the timeline, used as milestones by `[` and `]`.
 - **Comparison:** grids overlay by default, the verdict names the cell where the two expansion orders diverge, and a chart plots both runs' progress.
@@ -28,12 +61,12 @@ Stability, smoothness and presentation. See [docs/AUDIT.md](docs/AUDIT.md#310-fo
 
 ## 3.0.0
 
-A rebuild of the product around what the October 2026 audit found. See [docs/AUDIT.md](docs/AUDIT.md) for each finding and how it was resolved.
+A rebuild based on the October 2026 audit of 2.0.0. See [docs/AUDIT.md](docs/AUDIT.md#200--300-audit) for each finding and how it was resolved.
 
 ### Added
 
 - **Explore page** with 14 prepared experiments, an algorithm reference table, recent and saved experiments.
-- **Interactive tour** that waits for you to run, inspect, edit and compare.
+- **Tour** with six steps that each wait for the action they describe: run, inspect, edit and compare.
 - **Data-structure inspectors** for every algorithm: queue, stack, min-heap with stale entries, open set with g, h and f, call stack, merge buffer, pointers, candidate heap, sorted edges and union-find fragments, k-means clusters, gradient and velocity.
 - **Explanations** for every operation, built from real values, plus a preview of the next one.
 - **Comparison** of two algorithms, or two settings of one, on a shared input, with a metric table, written verdict and a grid overlay mode.

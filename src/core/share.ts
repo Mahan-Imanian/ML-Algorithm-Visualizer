@@ -1,5 +1,15 @@
 import type { Experiment, ViewSettings } from "./experiment";
-import { connectEdges, edgeWeight, GRAPH_MAX, GRAPH_MIN, type GraphInput } from "./graph/graph";
+import {
+  connectEdges,
+  DEFAULT_GRAPH_DENSITY,
+  edgesBetween,
+  GRAPH_DENSITY,
+  GRAPH_MAX,
+  GRAPH_MIN,
+  round3,
+  type GraphInput,
+} from "./graph/graph";
+import { DEFAULT_GRID_PARAMS, HEURISTIC_WEIGHT } from "./grid/algorithms";
 import {
   GRID_SIZES,
   type GridInput,
@@ -8,13 +18,29 @@ import {
   type Terrain,
 } from "./grid/model";
 import { getAlgo, isAlgoId } from "./info";
-import { makeRegression, type RegressionData } from "./learn/gradient";
-import { makeClusters, type ClusterData, type KInit } from "./learn/kmeans";
+import {
+  DEFAULT_GRADIENT_PARAMS,
+  DEFAULT_REGRESSION_POINTS,
+  GRADIENT_LIMITS,
+  makeRegression,
+  REGRESSION_POINTS,
+  type RegressionData,
+} from "./learn/gradient";
+import {
+  CLUSTER_POINTS,
+  DEFAULT_CLUSTER_POINTS,
+  DEFAULT_KMEANS_PARAMS,
+  K_RANGE,
+  makeClusters,
+  type ClusterData,
+  type KInit,
+} from "./learn/kmeans";
 import { SEARCH_MAX, SEARCH_MIN, type TargetMode } from "./search/search";
-import { SORT_MAX, SORT_MIN, type SortPreset } from "./sort/input";
+import { SORT_MAX, SORT_MIN, SORT_VALUE_MAX, SORT_VALUE_MIN, type SortPreset } from "./sort/input";
+import type { Range } from "./types";
 
-export const FORMAT = "algoscope.experiment";
-export const VERSION = 3;
+const FORMAT = "algoscope.experiment";
+const VERSION = 3;
 
 type Json = Record<string, unknown>;
 
@@ -44,24 +70,15 @@ function unrle(text: string, length: number): Uint8Array | null {
   let at = 0;
   for (const part of text.split(".")) {
     if (!part) continue;
+    if (!/^[0-9][0-9a-z]+$/.test(part)) return null;
     const d = Number(part[0]);
     const count = parseInt(part.slice(1), 36);
-    if (
-      !Number.isInteger(d) ||
-      d < 0 ||
-      d > 9 ||
-      !Number.isInteger(count) ||
-      count < 1 ||
-      at + count > length
-    )
-      return null;
+    if (count < 1 || at + count > length) return null;
     out.fill(d, at, at + count);
     at += count;
   }
   return at === length ? out : null;
 }
-
-const round3 = (v: number) => Math.round(v * 1000) / 1000;
 
 export function toPlain(exp: Experiment, cursor = 0): Json {
   const base: Json = { f: exp.family, a: exp.a, b: exp.b, view: exp.view, cur: cursor };
@@ -160,7 +177,9 @@ export function fromFile(text: string): DecodeResult {
   }
   if (!isObj(raw) || raw.format !== FORMAT)
     return { ok: false, error: "That file is not an Algoscope experiment." };
-  if (typeof raw.version !== "number" || raw.version > VERSION)
+  if (int(raw.version, 1, Number.MAX_SAFE_INTEGER) === null)
+    return { ok: false, error: "That file has no valid format version." };
+  if ((raw.version as number) > VERSION)
     return { ok: false, error: "That file was made by a newer version of Algoscope." };
   return fromPlain({ v: raw.version, ...(isObj(raw.experiment) ? raw.experiment : {}) });
 }
@@ -173,6 +192,7 @@ const int = (v: unknown, lo: number, hi: number): number | null =>
   typeof v === "number" && Number.isInteger(v) && v >= lo && v <= hi ? v : null;
 const num = (v: unknown, lo: number, hi: number): number | null =>
   typeof v === "number" && Number.isFinite(v) && v >= lo && v <= hi ? v : null;
+const inRange = (v: unknown, r: Range): number | null => num(v, r.min, r.max);
 const oneOf = <T extends string>(v: unknown, opts: readonly T[]): T | null =>
   typeof v === "string" && (opts as readonly string[]).includes(v) ? (v as T) : null;
 
@@ -195,7 +215,7 @@ function variant(raw: unknown, family: string, model?: string): Experiment["a"] 
         heuristic:
           oneOf<Heuristic>(p.heuristic, ["manhattan", "euclidean", "octile", "zero"]) ??
           "manhattan",
-        weight: num(p.weight, 1, 5) ?? 1,
+        weight: inRange(p.weight, HEURISTIC_WEIGHT) ?? DEFAULT_GRID_PARAMS.weight,
       },
     } as Experiment["a"];
   }
@@ -211,27 +231,31 @@ function variant(raw: unknown, family: string, model?: string): Experiment["a"] 
             (q): q is { x: number; y: number } =>
               isObj(q) && num(q.x, 0, 1) !== null && num(q.y, 0, 1) !== null,
           )
-          .slice(0, 8)
+          .slice(0, K_RANGE.max)
           .map((q) => ({ x: q.x, y: q.y }))
       : [];
     return {
       algo: "kmeans",
       params: {
-        k: int(p.k, 1, 8) ?? 4,
-        init: oneOf<KInit>(p.init, ["plusplus", "random", "corner", "manual"]) ?? "plusplus",
+        k: int(p.k, K_RANGE.min, K_RANGE.max) ?? DEFAULT_KMEANS_PARAMS.k,
+        init:
+          oneOf<KInit>(p.init, ["plusplus", "random", "corner", "manual"]) ??
+          DEFAULT_KMEANS_PARAMS.init,
         manual,
       },
     } as Experiment["a"];
   }
   if (raw.algo === "gradient") {
+    const d = DEFAULT_GRADIENT_PARAMS;
+    const L = GRADIENT_LIMITS;
     return {
       algo: "gradient",
       params: {
-        lr: num(p.lr, 0.001, 3) ?? 0.6,
-        beta: num(p.beta, 0, 0.99) ?? 0,
-        m0: num(p.m0, -1.5, 2.3) ?? -1,
-        b0: num(p.b0, -1, 1.4) ?? 1,
-        steps: int(p.steps, 1, 500) ?? 80,
+        lr: inRange(p.lr, L.lr) ?? d.lr,
+        beta: inRange(p.beta, L.beta) ?? d.beta,
+        m0: inRange(p.m0, L.m0) ?? d.m0,
+        b0: inRange(p.b0, L.b0) ?? d.b0,
+        steps: int(p.steps, L.steps.min, L.steps.max) ?? d.steps,
       },
     } as Experiment["a"];
   }
@@ -243,7 +267,7 @@ function view(raw: unknown): ViewSettings {
   return { values: v.values === true, overlay: v.overlay !== false };
 }
 
-export function fromPlain(raw: unknown): DecodeResult {
+function fromPlain(raw: unknown): DecodeResult {
   try {
     if (!isObj(raw)) throw new Invalid("not an object");
     if (typeof raw.v === "number" && raw.v > VERSION)
@@ -294,7 +318,7 @@ export function fromPlain(raw: unknown): DecodeResult {
         Array.isArray(inp.v) &&
           inp.v.length >= SORT_MIN &&
           inp.v.length <= SORT_MAX &&
-          inp.v.every((x) => int(x, 1, 999) !== null)
+          inp.v.every((x) => int(x, SORT_VALUE_MIN, SORT_VALUE_MAX) !== null)
           ? (inp.v as number[])
           : null,
         "values",
@@ -350,10 +374,10 @@ export function fromPlain(raw: unknown): DecodeResult {
           throw new Invalid("node position");
         return { x: p[0] as number, y: p[1] as number };
       });
-      const density = int(inp.dn, 1, 6) ?? 3;
+      const density = int(inp.dn, GRAPH_DENSITY.min, GRAPH_DENSITY.max) ?? DEFAULT_GRAPH_DENSITY;
       let edges: GraphInput["edges"];
-      if (Array.isArray(inp.e) && inp.e.length) {
-        edges = inp.e.map((e) => {
+      if (Array.isArray(inp.e)) {
+        const pairs = inp.e.map((e): [number, number] => {
           if (
             !Array.isArray(e) ||
             int(e[0], 0, nodes.length - 1) === null ||
@@ -361,14 +385,9 @@ export function fromPlain(raw: unknown): DecodeResult {
             e[0] === e[1]
           )
             throw new Invalid("edge");
-          const x = e[0] as number;
-          const y = e[1] as number;
-          return [Math.min(x, y), Math.max(x, y), edgeWeight(nodes[x], nodes[y])] as [
-            number,
-            number,
-            number,
-          ];
+          return [e[0], e[1]];
         });
+        edges = edgesBetween(nodes, pairs);
       } else edges = connectEdges(nodes, density);
       exp = {
         family,
@@ -393,7 +412,11 @@ export function fromPlain(raw: unknown): DecodeResult {
         exp = {
           family,
           model,
-          input: makeClusters(ds, int(inp.n, 30, 400) ?? 200, seed),
+          input: makeClusters(
+            ds,
+            int(inp.n, CLUSTER_POINTS.min, CLUSTER_POINTS.max) ?? DEFAULT_CLUSTER_POINTS,
+            seed,
+          ),
           a,
           b,
           view: vw,
@@ -403,7 +426,11 @@ export function fromPlain(raw: unknown): DecodeResult {
         exp = {
           family,
           model: "gradient",
-          input: makeRegression(ds, int(inp.n, 10, 200) ?? 60, seed),
+          input: makeRegression(
+            ds,
+            int(inp.n, REGRESSION_POINTS.min, REGRESSION_POINTS.max) ?? DEFAULT_REGRESSION_POINTS,
+            seed,
+          ),
           a,
           b,
           view: vw,

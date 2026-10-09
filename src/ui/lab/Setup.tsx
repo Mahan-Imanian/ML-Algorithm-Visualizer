@@ -11,14 +11,27 @@ import {
   type SearchExp,
   type SortExp,
 } from "@/core/experiment";
-import type { GridParams } from "@/core/grid/algorithms";
-import { GRID_SIZES, type GridSize, type Heuristic } from "@/core/grid/model";
+import { HEURISTIC_WEIGHT, type GridParams } from "@/core/grid/algorithms";
+import { GRID_SIZES, MUD_COST, type GridSize, type Heuristic } from "@/core/grid/model";
 import { makeGrid, TERRAINS } from "@/core/grid/terrain";
 import { components } from "@/core/graph/edit";
-import { GRAPH_MAX, GRAPH_MIN, makeGraph } from "@/core/graph/graph";
+import { GRAPH_DENSITY, GRAPH_MAX, GRAPH_MIN, makeGraph } from "@/core/graph/graph";
 import { algosOf, getAlgo, type AlgoId } from "@/core/info";
-import { makeRegression, REGRESSION_DATASETS, type GradientParams } from "@/core/learn/gradient";
-import { CLUSTER_DATASETS, K_INITS, makeClusters, type KMeansParams } from "@/core/learn/kmeans";
+import {
+  GRADIENT_LIMITS,
+  makeRegression,
+  REGRESSION_DATASETS,
+  REGRESSION_POINTS,
+  type GradientParams,
+} from "@/core/learn/gradient";
+import {
+  CLUSTER_DATASETS,
+  CLUSTER_POINTS,
+  K_INITS,
+  K_RANGE,
+  makeClusters,
+  type KMeansParams,
+} from "@/core/learn/kmeans";
 import { randomSeed } from "@/core/rng";
 import {
   makeSearchInput,
@@ -247,7 +260,9 @@ function ProblemSection({ exp }: { exp: Experiment }) {
                       ({ ...e, input: makeGraph(g.nodes.length, g.seed, Number(d)) }) as GraphExp,
                   )
                 }
-                options={["2", "3", "4", "5"].map((d) => ({ value: d, label: d }))}
+                options={Array.from({ length: GRAPH_DENSITY.max - GRAPH_DENSITY.min + 1 }, (_, i) =>
+                  String(GRAPH_DENSITY.min + i),
+                ).map((d) => ({ value: d, label: d }))}
                 className="w-full"
               />
             </Field>
@@ -307,9 +322,7 @@ function ProblemSection({ exp }: { exp: Experiment }) {
               <Slider
                 label="Points"
                 value={c.n}
-                min={60}
-                max={400}
-                step={10}
+                {...CLUSTER_POINTS}
                 onChange={(n) =>
                   update((e) => ({ ...e, input: makeClusters(c.dataset, n, c.seed) }) as KMeansExp)
                 }
@@ -350,9 +363,7 @@ function ProblemSection({ exp }: { exp: Experiment }) {
               <Slider
                 label="Points"
                 value={r.n}
-                min={10}
-                max={200}
-                step={5}
+                {...REGRESSION_POINTS}
                 onChange={(n) =>
                   update(
                     (e) => ({ ...e, input: makeRegression(r.dataset, n, r.seed) }) as GradientExp,
@@ -564,8 +575,7 @@ function ToolsSection() {
           className="mt-4"
           label="Mud cost per cell"
           value={weight}
-          min={2}
-          max={9}
+          {...MUD_COST}
           onChange={setWeight}
         />
       )}
@@ -577,7 +587,7 @@ function ToolsSection() {
   );
 }
 
-export function ParamsEditor({ which }: { which: "a" | "b" }) {
+function ParamsEditor({ which }: { which: "a" | "b" }) {
   const exp = useLab((s) => s.exp);
   const setParams = useLab((s) => s.setParams);
   const v = which === "a" ? exp.a : exp.b;
@@ -603,9 +613,7 @@ export function ParamsEditor({ which }: { which: "a" | "b" }) {
           <Slider
             label="Heuristic weight w"
             value={p.weight}
-            min={1}
-            max={5}
-            step={0.5}
+            {...HEURISTIC_WEIGHT}
             onChange={(weight) => set({ ...p, weight })}
             format={(x) => `×${x}`}
           />
@@ -636,8 +644,7 @@ export function ParamsEditor({ which }: { which: "a" | "b" }) {
         <Slider
           label="Clusters k"
           value={p.k}
-          min={1}
-          max={8}
+          {...K_RANGE}
           onChange={(k) => set({ ...p, k, manual: p.manual.slice(0, k) })}
         />
         <Field
@@ -683,42 +690,32 @@ export function ParamsEditor({ which }: { which: "a" | "b" }) {
         <Slider
           label="Learning rate"
           value={p.lr}
-          min={0.01}
-          max={1.5}
-          step={0.01}
+          {...GRADIENT_LIMITS.lr}
           onChange={(lr) => set({ ...p, lr: Math.round(lr * 100) / 100 })}
         />
         <Slider
           label="Momentum β"
           value={p.beta}
-          min={0}
-          max={0.95}
-          step={0.05}
+          {...GRADIENT_LIMITS.beta}
           onChange={(beta) => set({ ...p, beta: Math.round(beta * 100) / 100 })}
         />
         <Slider
           label="Steps"
           value={p.steps}
-          min={10}
-          max={300}
-          step={10}
+          {...GRADIENT_LIMITS.steps}
           onChange={(steps) => set({ ...p, steps })}
         />
         <div className="grid grid-cols-2 gap-3">
           <Slider
             label="Start m"
             value={p.m0}
-            min={-1.5}
-            max={2.3}
-            step={0.1}
+            {...GRADIENT_LIMITS.m0}
             onChange={(m0) => set({ ...p, m0: Math.round(m0 * 10) / 10 })}
           />
           <Slider
             label="Start b"
             value={p.b0}
-            min={-1}
-            max={1.4}
-            step={0.1}
+            {...GRADIENT_LIMITS.b0}
             onChange={(b0) => set({ ...p, b0: Math.round(b0 * 10) / 10 })}
           />
         </div>

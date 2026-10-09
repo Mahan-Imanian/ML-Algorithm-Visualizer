@@ -1,6 +1,8 @@
 import type { BaseEvent, Machine } from "./types";
 
-export interface Frame<S> {
+export const KEYFRAME_INTERVAL = { default: 64, gradient: 32, kmeans: 8 };
+
+interface Frame<S> {
   state: S;
   hits: Record<string, number>;
   cursor: number;
@@ -20,7 +22,7 @@ export class Player<I, E extends BaseEvent, S> {
     private readonly machine: Machine<I, E, S>,
     input: I,
     readonly events: E[],
-    private readonly every = 64,
+    private readonly every = KEYFRAME_INTERVAL.default,
   ) {
     const live: Snapshot<S> = { state: machine.init(input), hits: {} };
     this.keyframes.push(this.copy(live));

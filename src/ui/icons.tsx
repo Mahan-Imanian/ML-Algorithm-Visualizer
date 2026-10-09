@@ -144,11 +144,6 @@ export const TargetPin = (p: P) => (
     <path d="M8 1v2M8 13v2M1 8h2M13 8h2" />
   </Svg>
 );
-export const Maze = (p: P) => (
-  <Svg {...p}>
-    <path d="M2.5 2.5h11v11h-11zM2.5 6h5M10 2.5v6M5.5 9.5v4M8.5 11h5" />
-  </Svg>
-);
 export const Dice = (p: P) => (
   <Svg {...p}>
     <path d="M2.5 2.5h11v11h-11z" />
@@ -209,11 +204,6 @@ export const Grid = (p: P) => (
     <path d="M2.5 2.5h4.5v4.5H2.5zM9 2.5h4.5v4.5H9zM2.5 9h4.5v4.5H2.5zM9 9h4.5v4.5H9z" />
   </Svg>
 );
-export const Panel = (p: P) => (
-  <Svg {...p}>
-    <path d="M2 3h12v10H2zM10 3v10" />
-  </Svg>
-);
 export const PanelLeft = (p: P) => (
   <Svg {...p}>
     <path d="M2 3h12v10H2zM6 3v10" />
@@ -228,12 +218,6 @@ export const Sun = (p: P) => (
 export const Moon = (p: P) => (
   <Svg {...p}>
     <path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z" />
-  </Svg>
-);
-export const Info = (p: P) => (
-  <Svg {...p}>
-    <circle cx="8" cy="8" r="6" />
-    <path d="M8 7v4M8 5h.01" />
   </Svg>
 );
 export const Warn = (p: P) => (

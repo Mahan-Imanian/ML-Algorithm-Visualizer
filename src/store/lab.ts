@@ -7,6 +7,7 @@ import {
   type Experiment,
   type Run,
 } from "@/core/experiment";
+import { MUD_COST } from "@/core/grid/model";
 import type { AlgoId } from "@/core/info";
 import { nextGroupCursor, prevGroupCursor } from "@/core/trace";
 
@@ -15,6 +16,12 @@ export type GraphTool = "move" | "edge" | "node" | "delete";
 export type Granularity = "step" | "op";
 
 export const SPEEDS = [0.25, 0.5, 1, 2, 4, 8] as const;
+const DEFAULT_SPEED_INDEX = SPEEDS.indexOf(1);
+
+const RUN_SECONDS_AT_1X = { step: 12, op: 20 };
+const STEPS_PER_SECOND = { min: 1.5, max: 60 };
+const OPS_PER_SECOND = { min: 3, max: 400 };
+const DEFAULT_MUD_COST = 5;
 
 interface LabStore {
   exp: Experiment;
@@ -70,7 +77,7 @@ function build(exp: Experiment) {
   return { runA, runB };
 }
 
-export function lengthOf(run: Run | null): number {
+function lengthOf(run: Run | null): number {
   return run ? run.trace.events.length : 0;
 }
 
@@ -90,10 +97,10 @@ export const useLab = create<LabStore>((set, get) => ({
   cursorA: 0,
   cursorB: 0,
   playing: false,
-  speed: 2,
+  speed: DEFAULT_SPEED_INDEX,
   granularity: "step",
   tool: "wall",
-  weight: 5,
+  weight: DEFAULT_MUD_COST,
   editing: false,
   focusCell: null,
   revision: 0,
@@ -254,7 +261,7 @@ export const useLab = create<LabStore>((set, get) => ({
     set({ tool });
   },
   setWeight(weight) {
-    set({ weight: Math.max(2, Math.min(9, Math.round(weight))) });
+    set({ weight: Math.max(MUD_COST.min, Math.min(MUD_COST.max, Math.round(weight))) });
   },
   setFocusCell(focusCell) {
     set({ focusCell });
@@ -281,8 +288,10 @@ export function baseRate(s: Pick<LabStore, "runA" | "runB" | "granularity">): nu
   const runs = [s.runA, s.runB].filter(Boolean) as Run[];
   if (s.granularity === "step") {
     const groups = Math.max(...runs.map((r) => r.trace.groupEnds.length));
-    return Math.max(1.5, Math.min(60, groups / 12));
+    const rate = groups / RUN_SECONDS_AT_1X.step;
+    return Math.max(STEPS_PER_SECOND.min, Math.min(STEPS_PER_SECOND.max, rate));
   }
   const ops = Math.max(...runs.map((r) => r.trace.events.length));
-  return Math.max(3, Math.min(400, ops / 20));
+  const rate = ops / RUN_SECONDS_AT_1X.op;
+  return Math.max(OPS_PER_SECOND.min, Math.min(OPS_PER_SECOND.max, rate));
 }

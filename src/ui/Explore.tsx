@@ -204,7 +204,7 @@ export function Explore() {
   );
 }
 
-export function SavedList({ items }: { items: SavedExperiment[] }) {
+function SavedList({ items }: { items: SavedExperiment[] }) {
   const remove = useLibrary((s) => s.remove);
   const restore = useLibrary((s) => s.restore);
   const rename = useLibrary((s) => s.rename);

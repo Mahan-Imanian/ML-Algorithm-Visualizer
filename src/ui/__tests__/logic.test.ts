@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { defaultExperiment, runVariant } from "@/core/experiment";
 import { layoutFor } from "@/lib/layout";
 import { explain } from "../lab/explain";
 import { parseHash } from "@/lib/router";
 import { searchCommands, type Command } from "../commands";
 import { shortcutFor } from "../shortcuts";
+import { baseRate } from "@/store/lab";
 
 const key = (
   k: string,
@@ -124,6 +125,63 @@ describe("captions", () => {
       expect(end.now, algo).toMatch(/^(Sorted all \d+ values|Stopped after \d+ steps)/);
       expect(end.next).toBeNull();
     }
+  });
+});
+
+describe("playback rate", () => {
+  const rateFor = (algo: Parameters<typeof defaultExperiment>[0], granularity: "step" | "op") => {
+    const runA = runVariant(defaultExperiment(algo), "a")!;
+    return { runA, rate: baseRate({ runA, runB: null, granularity }) };
+  };
+
+  it("plays a mid-sized run in 12 s by step and 20 s by operation at 1x", () => {
+    const step = rateFor("bfs", "step");
+    expect(step.runA.trace.groupEnds.length / step.rate).toBeCloseTo(12, 6);
+    const op = rateFor("bfs", "op");
+    expect(op.runA.trace.events.length / op.rate).toBeCloseTo(20, 6);
+  });
+
+  it("keeps short runs at a readable minimum rate", () => {
+    expect(rateFor("binary", "step").rate).toBe(1.5);
+    expect(rateFor("binary", "op").rate).toBe(3);
+  });
+});
+
+describe("saved experiments in local storage", () => {
+  afterEach(() => localStorage.clear());
+
+  it("skips entries it cannot show instead of crashing the saved list", async () => {
+    const good = {
+      id: "x1",
+      name: "Mine",
+      savedAt: 1,
+      code: "abc",
+      family: "sort",
+      label: "Merge",
+    };
+    localStorage.setItem(
+      "algoscope.library.v1",
+      JSON.stringify([
+        good,
+        { ...good, id: "x2", family: "trees" },
+        { ...good, id: "x3", name: 5 },
+        { ...good, id: "x4", savedAt: "yesterday" },
+        null,
+        "x5",
+      ]),
+    );
+    localStorage.setItem("algoscope.last.v1", JSON.stringify(5));
+    vi.resetModules();
+    const { useLibrary } = await import("@/store/library");
+    expect(useLibrary.getState().items).toEqual([good]);
+    expect(useLibrary.getState().last).toBeNull();
+  });
+
+  it("starts empty when the stored library is not a list", async () => {
+    localStorage.setItem("algoscope.library.v1", JSON.stringify({ items: [] }));
+    vi.resetModules();
+    const { useLibrary } = await import("@/store/library");
+    expect(useLibrary.getState().items).toEqual([]);
   });
 });
 

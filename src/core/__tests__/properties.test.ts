@@ -3,7 +3,7 @@ import { compareInsights, DEFAULT_VIEW, runVariant, type Experiment } from "../e
 import { runGrid, type GridAlgo, type GridParams } from "../grid/algorithms";
 import { gridMachine } from "../grid/machine";
 import type { GridInput, GridSize, Heuristic } from "../grid/model";
-import { makeGrid } from "../grid/terrain";
+import { makeGrid, reachable } from "../grid/terrain";
 import { EDGE_TREE, graphMachine, runGraph, type GraphInput } from "../graph/graph";
 import { getAlgo } from "../info";
 import {
@@ -119,6 +119,15 @@ const admissible = (g: GridInput): Heuristic[] =>
   g.diagonal ? ["euclidean", "octile", "zero"] : ["manhattan", "euclidean", "octile", "zero"];
 
 describe("pathfinding against a reference Dijkstra", () => {
+  it("scatter grids are solvable for every size, both move sets and 100 seeds", () => {
+    for (const size of ["S", "M", "L", "T"] as GridSize[])
+      for (const diagonal of [false, true])
+        for (let seed = 0; seed < 100; seed++) {
+          const g = makeGrid(size, "scatter", seed, diagonal);
+          expect(reachable(g), `${size} ${diagonal} ${seed}`).toBe(true);
+        }
+  });
+
   it("every algorithm and heuristic returns a valid path exactly when one exists", () => {
     for (const g of GRIDS) {
       const reachable = distances(g, true)[g.target] < Infinity;

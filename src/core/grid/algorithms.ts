@@ -1,6 +1,6 @@
 import { MinHeap } from "../heap";
 import { TraceBuilder } from "../trace";
-import type { BaseEvent, Trace } from "../types";
+import type { BaseEvent, Range, Trace } from "../types";
 import {
   fmtCell,
   heuristic,
@@ -21,6 +21,8 @@ export interface GridParams {
 }
 
 export const DEFAULT_GRID_PARAMS: GridParams = { heuristic: "manhattan", weight: 1 };
+
+export const HEURISTIC_WEIGHT: Range = { min: 1, max: 5, step: 0.5 };
 
 export type GridEvent = BaseEvent &
   (

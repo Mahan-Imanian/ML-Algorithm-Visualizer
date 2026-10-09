@@ -1,5 +1,5 @@
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
 import { useLab } from "@/store/lab";
 import { useSettings } from "@/store/settings";
@@ -122,6 +122,22 @@ describe("lab", () => {
     expect(s.exp.a.algo).toBe("bfs");
     expect(s.exp.b?.algo).toBe("dijkstra");
     expect(s.cursorA).toBe(30);
+  });
+
+  it("imports a pasted link at its step even when the lab loads slowly", async () => {
+    const exp = SCENARIOS.find((s) => s.id === "weights")!.build(false);
+    render(<App />);
+    act(() => useUI.setState({ dialog: "import" }));
+    fireEvent.change(await screen.findByLabelText("Or paste a link"), {
+      target: { value: `https://example.test/#/lab?e=${encode(exp, 30)}` },
+    });
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole("button", { name: "Open link" }));
+    act(() => vi.advanceTimersByTime(1000));
+    vi.useRealTimers();
+    await screen.findByRole("slider", { name: "Timeline position" }, { timeout: 4000 });
+    await waitFor(() => expect(useLab.getState().exp.b?.algo).toBe("dijkstra"));
+    expect(useLab.getState().cursorA).toBe(30);
   });
 
   it("explains a broken link instead of failing silently", async () => {

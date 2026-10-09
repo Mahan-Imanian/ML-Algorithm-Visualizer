@@ -30,6 +30,8 @@ export const SORT_PRESETS: { id: Exclude<SortPreset, "custom">; label: string; h
 
 export const SORT_MIN = 4;
 export const SORT_MAX = 64;
+export const SORT_VALUE_MIN = 1;
+export const SORT_VALUE_MAX = 999;
 
 export function makeSortInput(
   preset: Exclude<SortPreset, "custom">,
@@ -70,9 +72,10 @@ export function parseCustomValues(text: string): { values: number[] } | { error:
   const values: number[] = [];
   for (const p of parts) {
     const v = Number(p);
-    if (!Number.isFinite(v) || !Number.isInteger(v))
+    if (!/^-?\d+(\.\d+)?$/.test(p) || !Number.isInteger(v))
       return { error: `"${p}" is not a whole number.` };
-    if (v < 1 || v > 999) return { error: "Use whole numbers from 1 to 999." };
+    if (v < SORT_VALUE_MIN || v > SORT_VALUE_MAX)
+      return { error: `Use whole numbers from ${SORT_VALUE_MIN} to ${SORT_VALUE_MAX}.` };
     values.push(v);
   }
   return { values };
