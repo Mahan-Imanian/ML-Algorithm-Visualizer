@@ -23,7 +23,7 @@
 
 <a href="https://mahan-imanian.github.io/ML-Algorithm-Visualizer/"><img alt="Algoscope comparing Dijkstra and A* on one weighted grid, with Dijkstra's min-heap and the synced pseudocode beside it" src=".github/assets/showcase.png" width="100%"></a>
 
-Most visualizers animate the result of an algorithm and stop there. That hides the part people actually get wrong: why _this_ cell, _this_ pivot or _this_ edge comes next. Algoscope treats a run as a recording. The structure the algorithm decides from stays on screen at every step, every step is explained with real values, and two algorithms can run side by side on identical input so the difference is measured instead of guessed.
+Algoscope records every operation of a run and plays it back next to the data structure the algorithm reads from, such as the BFS queue, Dijkstra's heap or quicksort's call stack. Each step has a caption with the actual values, and two algorithms can run on the same input so their counts can be compared directly.
 
 ## What you can do
 
@@ -42,16 +42,16 @@ The BFS queue, DFS stack, Dijkstra's min-heap (stale entries included), A\*'s op
   <img alt="Kruskal rejecting an edge that would close a cycle, with union-find fragments" src=".github/assets/f-kruskal.png" width="49%">
 </p>
 
-### Start from a question, not an algorithm
+### Prepared experiments
 
-Explore opens with 14 prepared experiments such as _Why does greedy search walk into the trap?_ or _Can insertion sort beat merge sort?_ The input is already built and the run already recorded, so nothing starts empty. Change one thing (a wall, the pivot rule, the heuristic, the learning rate) and it records again instantly.
+Explore lists 14 prepared experiments, each with a question such as _Why does breadth-first search always find the fewest moves?_ or _On nearly sorted data, can a quadratic sort beat merge sort?_ The input is built and the run is recorded when you open one. Change a wall, the pivot rule, the heuristic or the learning rate and the run is recorded again.
 
 <p align="center">
   <img alt="The Explore page listing prepared experiments by question" src=".github/assets/f-explore.png" width="49%">
   <img alt="k-means after convergence, with Voronoi regions and inertia" src=".github/assets/f-kmeans.png" width="49%">
 </p>
 
-### Teach with it, share it
+### Presentation mode and share links
 
 Press <kbd>P</kbd> for presentation mode: full screen, large type, and toggles for code, state, explanation and metrics. Every experiment is a link: input, seed, settings and optionally the current step are encoded in the URL, and JSON export uses the same format.
 
@@ -117,7 +117,7 @@ No content scripts, no host permissions and a strict CSP (`script-src 'self'`). 
 
 | Command             | What it does                                                             |
 | ------------------- | ------------------------------------------------------------------------ |
-| `npm test`          | Runs the 100 Vitest tests (algorithms, player, share links, UI journeys) |
+| `npm test`          | Runs the 195 Vitest tests (algorithms, player, share links, UI journeys) |
 | `npm run lint`      | ESLint                                                                   |
 | `npm run typecheck` | `tsc --noEmit`                                                           |
 | `npm run build`     | Type-checks and builds the GitHub Pages site into `dist/`                |
@@ -128,7 +128,7 @@ CI runs lint, typecheck, tests and both builds on every push and pull request to
 
 ## Limits
 
-- Lighthouse accessibility is 100 on Explore and the Lab (desktop and mobile, checked 2026-10-09), but there has been no session with a real screen reader yet.
+- Lighthouse 12.8 on the production build (2026-10-09): accessibility and best practices 100 on Explore and the Lab, desktop and mobile. Performance is 100 on desktop and 87 to 89 on mobile, where first paint waits for the 150 KB (gzip) bundle on the simulated slow 4G link. There has been no session with a real screen reader yet.
 - No browser end-to-end tests in CI; the UI tests run in jsdom.
 - Smoothness was measured on a 60 Hz display only.
 - No data-structure family (BST, hash table) and no Bellman-Ford or topological sort yet.
