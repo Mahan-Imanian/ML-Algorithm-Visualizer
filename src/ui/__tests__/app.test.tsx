@@ -27,9 +27,9 @@ describe("first visit", () => {
   it("explains the product and offers a guided start", () => {
     render(<App />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      /queue, the heap, the pivot/i,
+      /queue, heap or call stack/i,
     );
-    expect(screen.getByRole("button", { name: /60-second tour/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /6-step tour/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Experiments" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /BFS floods a maze/i }).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Dijkstra's algorithm" })).toHaveAttribute(
@@ -40,7 +40,7 @@ describe("first visit", () => {
 
   it("starts the tour on a prepared maze", async () => {
     render(<App />);
-    fireEvent.click(screen.getByRole("button", { name: /60-second tour/i }));
+    fireEvent.click(screen.getByRole("button", { name: /6-step tour/i }));
     await act(async () => {
       window.dispatchEvent(new HashChangeEvent("hashchange"));
       await new Promise((r) => setTimeout(r, 100));

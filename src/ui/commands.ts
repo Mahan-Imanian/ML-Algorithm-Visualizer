@@ -353,7 +353,7 @@ export function buildCommands(): Command[] {
     },
     {
       id: "tour",
-      label: "Take the 60-second tour",
+      label: "Take the 6-step tour",
       group: "View",
       keywords: "onboarding help guide tutorial",
       run: () => startTour(),
