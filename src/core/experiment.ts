@@ -533,7 +533,7 @@ export function compareInsights(a: Run, b: Run, la: string, lb: string): string[
     out.push(
       ta === tb
         ? `Both trees weigh ${ta}. A minimum spanning tree's weight is unique.`
-        : `Tree weights differ (${ta} vs ${tb}): ties between equal edges.`,
+        : `Tree weights differ (${ta} vs ${tb}): the graph is disconnected, so the runs span different sets of nodes.`,
     );
     out.push(`${la} discards ${ra} edges; ${lb} discards ${rb}.`);
     return out;
