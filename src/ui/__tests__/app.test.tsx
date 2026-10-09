@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import App from "../App";
 import { useLab } from "@/store/lab";
+import { useSettings } from "@/store/settings";
 import { useUI } from "@/store/ui";
 import { encode } from "@/core/share";
 import { SCENARIOS } from "@/core/scenarios";
@@ -197,5 +198,17 @@ describe("presentation", () => {
       while (s().cursorA > at) s().checkpoint(-1);
     });
     expect(s().cursorA).toBe(at);
+  });
+});
+
+describe("theme", () => {
+  it("switches theme from the menu again and again without a reload", async () => {
+    useSettings.setState({ theme: "light" });
+    render(<App />);
+    for (const expected of ["dark", "light", "dark"]) {
+      fireEvent.keyDown(screen.getByRole("button", { name: "More" }), { key: "Enter" });
+      fireEvent.click(await screen.findByRole("menuitem", { name: /(Paper|Scope) theme/ }));
+      expect(document.documentElement.dataset.theme).toBe(expected);
+    }
   });
 });
